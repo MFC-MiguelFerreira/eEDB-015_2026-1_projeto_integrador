@@ -33,8 +33,8 @@ Resources:
   # CSVs brutos do Kaggle, sem nenhuma modificação.
   BucketLandingZone:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain         # protege dados brutos de deleção acidental
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::AccountId}-${ProjectName}-landing"
       # Criptografia em repouso (requisito de cibersegurança)
@@ -66,8 +66,8 @@ Resources:
   # Convenção: s3://bucket/year=YYYY/state=XX/
   BucketBronze:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::AccountId}-${ProjectName}-bronze"
       # Versionamento ativado: preserva histórico de re-ingestões
@@ -98,8 +98,8 @@ Resources:
   # Convenção: s3://bucket/year=YYYY/state=XX/
   BucketSilver:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::AccountId}-${ProjectName}-silver"
       VersioningConfiguration:
@@ -127,8 +127,8 @@ Resources:
   # Agregados e métricas prontos para consulta via Athena.
   BucketGold:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::AccountId}-${ProjectName}-gold"
       VersioningConfiguration:
