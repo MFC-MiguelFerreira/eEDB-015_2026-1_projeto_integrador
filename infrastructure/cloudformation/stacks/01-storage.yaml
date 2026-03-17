@@ -175,7 +175,7 @@ Resources:
         Rules:
           - Id: ExpireAthenaResults
             Status: Enabled
-            ExpirationInDays: 30
+            ExpirationInDays: 2
       Tags:
         - Key: Project
           Value: !Ref ProjectName
