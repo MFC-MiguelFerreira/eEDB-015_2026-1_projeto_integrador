@@ -2,8 +2,9 @@
 # =============================================================================
 # destroy.sh — Remove um stack CloudFormation e seus recursos
 #
-# ATENÇÃO: buckets com DeletionPolicy=Retain NÃO são deletados pelo stack.
-# Para deletar os dados do S3, esvazie os buckets manualmente antes.
+# Todos os buckets S3 usam DeletionPolicy=Delete, portanto serão deletados
+# junto com o stack. Certifique-se de que os buckets estão vazios antes de
+# executar — o S3 não permite deletar buckets com objetos via CloudFormation.
 #
 # Uso:
 #   ./infrastructure/scripts/destroy.sh <stack>
@@ -41,8 +42,9 @@ echo " ATENÇÃO: esta ação é irreversível."
 echo " Stack a remover: $STACK_NAME"
 echo " Região         : $REGION"
 echo ""
-echo " Buckets com DeletionPolicy=Retain (Landing, Bronze, Silver, Gold)"
-echo " NÃO serão deletados — apenas desassociados do stack."
+echo " Todos os buckets S3 (Landing, Bronze, Silver, Gold, Athena)"
+echo " SERÃO DELETADOS junto com o stack (DeletionPolicy=Delete)."
+echo " Os buckets precisam estar vazios para que a deleção funcione."
 echo "===================================================================="
 echo ""
 read -r -p "Confirma a remoção? (digite 'sim' para continuar): " CONFIRM

@@ -12,6 +12,9 @@
 # O script usa as credenciais já configuradas no ambiente (variáveis de
 # ambiente do AWS Learner Lab: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
 # AWS_SESSION_TOKEN). Não é necessário passar --profile.
+#
+# Os buckets S3 usam DeletionPolicy=Delete — ao destruir o stack com
+# destroy.sh, todos os buckets e seus dados são removidos junto.
 # =============================================================================
 
 set -euo pipefail
