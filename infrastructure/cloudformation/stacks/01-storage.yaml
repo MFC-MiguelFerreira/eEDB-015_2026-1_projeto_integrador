@@ -1,0 +1,235 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Camada de armazenamento do Data Lake — Health Insurance Marketplace (eEDB-015).
+  Cria os buckets S3 das quatro camadas da arquitetura Medallion:
+  Landing Zone, Bronze, Silver e Gold, mais um bucket para resultados do Athena.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    Description: >
+      Prefixo identificador do projeto usado no nome dos buckets.
+      Deve ser lowercase (restrição de nomes S3).
+    AllowedPattern: "[a-z0-9-]+"
+
+  Group:
+    Type: String
+    Default: g05
+    Description: >
+      Identificador do grupo responsável pelo projeto.
+      Usado como tag e no nome dos exports do CloudFormation.
+    AllowedPattern: "[a-z0-9]+"
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- Landing Zone --------------------------------------------------
+  # CSVs brutos do Kaggle, sem nenhuma modificação.
+  BucketLandingZone:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${ProjectName}-landing"
+      # Criptografia em repouso (requisito de cibersegurança)
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Bloqueia qualquer acesso público
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: landing
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- Bronze --------------------------------------------------------
+  # Dados brutos versionados, particionados por ano/estado.
+  # Convenção: s3://bucket/year=YYYY/state=XX/
+  BucketBronze:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${ProjectName}-bronze"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: bronze
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- Silver --------------------------------------------------------
+  # Dados limpos em Parquet (Snappy), Crosswalk aplicado.
+  # Dados de preço tratados como confidenciais (anonimizados).
+  # Convenção: s3://bucket/year=YYYY/state=XX/
+  BucketSilver:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${ProjectName}-silver"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: silver
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- Gold ----------------------------------------------------------
+  # Agregados e métricas prontos para consulta via Athena.
+  BucketGold:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${ProjectName}-gold"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: gold
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- Athena Query Results ------------------------------------------
+  # Bucket dedicado para resultados das queries do Athena.
+  # Separado das camadas de dados para facilitar limpeza/controle de custo.
+  BucketAthenaResults:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete         # resultados são descartáveis
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${ProjectName}-athena-results"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      # Limpa resultados antigos automaticamente (economiza crédito)
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireAthenaResults
+            Status: Enabled
+            ExpirationInDays: 2
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: athena-results
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para outros stacks referenciarem via !ImportValue
+# ---------------------------------------------------------------------------
+Outputs:
+  LandingZoneBucketName:
+    Description: Nome do bucket Landing Zone
+    Value: !Ref BucketLandingZone
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-landing-bucket-name"
+
+  LandingZoneBucketArn:
+    Description: ARN do bucket Landing Zone
+    Value: !GetAtt BucketLandingZone.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-landing-bucket-arn"
+
+  BronzeBucketName:
+    Description: Nome do bucket Bronze
+    Value: !Ref BucketBronze
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-bronze-bucket-name"
+
+  BronzeBucketArn:
+    Description: ARN do bucket Bronze
+    Value: !GetAtt BucketBronze.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-bronze-bucket-arn"
+
+  SilverBucketName:
+    Description: Nome do bucket Silver
+    Value: !Ref BucketSilver
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-silver-bucket-name"
+
+  SilverBucketArn:
+    Description: ARN do bucket Silver
+    Value: !GetAtt BucketSilver.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-silver-bucket-arn"
+
+  GoldBucketName:
+    Description: Nome do bucket Gold
+    Value: !Ref BucketGold
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-gold-bucket-name"
+
+  GoldBucketArn:
+    Description: ARN do bucket Gold
+    Value: !GetAtt BucketGold.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-gold-bucket-arn"
+
+  AthenaResultsBucketName:
+    Description: Nome do bucket de resultados do Athena
+    Value: !Ref BucketAthenaResults
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-athena-results-bucket-name"
