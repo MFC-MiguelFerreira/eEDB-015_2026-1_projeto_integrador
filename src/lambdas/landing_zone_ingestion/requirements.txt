@@ -1,0 +1,8 @@
+# Dependências da Lambda de ingestão na Landing Zone
+#
+# boto3 já está disponível no runtime da Lambda (AWS SDK),
+# mas é listado aqui para fixar a versão mínima.
+boto3>=1.34.0
+
+# Cliente HTTP para download dos arquivos do Kaggle
+requests>=2.31.0
