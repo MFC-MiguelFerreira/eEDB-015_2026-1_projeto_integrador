@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Stack 02 — Lambda de Ingestão na Landing Zone.
+  Cria a função Lambda responsável por baixar os arquivos CSV do
+  dataset Health Insurance Marketplace (Kaggle) e armazená-los
+  no bucket de Landing Zone sem nenhuma modificação.
+  Depende do Stack 01 (storage) via ImportValue.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    AllowedPattern: "[a-z0-9-]+"
+
+  Group:
+    Type: String
+    Default: g05
+    AllowedPattern: "[a-z0-9]+"
+
+  # Bucket onde o pacote ZIP da Lambda está armazenado.
+  # Preenchido automaticamente pelo script deploy_lambda.sh com o nome
+  # do bucket Landing Zone criado pelo Stack 01.
+  LambdaCodeS3Bucket:
+    Type: String
+    Description: >
+      Bucket S3 onde o pacote ZIP da Lambda foi carregado pelo
+      script deploy_lambda.sh (normalmente o próprio bucket Landing Zone).
+
+  # Caminho do pacote ZIP dentro do bucket.
+  LambdaCodeS3Key:
+    Type: String
+    Default: lambdas/landing-zone-ingestion/function.zip
+    Description: Chave S3 do pacote ZIP gerado pelo script deploy_lambda.sh.
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- CloudWatch Log Group ------------------------------------------
+  # Criado explicitamente para controlar a retenção e evitar acúmulo de logs
+  # (custo no AWS Academy).
+  LandingZoneIngestionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Group}-landing-zone-ingestion"
+      # 7 dias é suficiente para debugging; reduz custo de armazenamento
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- Lambda Function -----------------------------------------------
+  LandingZoneIngestionFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: LandingZoneIngestionLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Group}-landing-zone-ingestion"
+      Description: >
+        Baixa os CSVs do Health Insurance Marketplace (Kaggle) e armazena
+        no bucket de Landing Zone sem modificações.
+      Runtime: python3.12
+      Handler: handler.lambda_handler
+
+      # LabRole: role pré-configurada no AWS Academy Learner Lab.
+      # No Learner Lab não é possível criar roles IAM customizadas;
+      # a LabRole já possui as permissões necessárias (S3, SSM, CloudWatch).
+      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+
+      # Timeout máximo da Lambda: 15 minutos.
+      # Downloads de arquivos grandes (ex: Rate.zip ~500 MB) podem demorar.
+      Timeout: 900
+
+      # 512 MB é suficiente para operações de download com streaming.
+      MemorySize: 512
+
+      # /tmp é o único storage gravável na Lambda.
+      # 10 240 MB (máximo) para acomodar os arquivos ZIP antes do upload.
+      EphemeralStorage:
+        Size: 10240
+
+      # Variáveis de ambiente injetadas em runtime
+      Environment:
+        Variables:
+          # Nome do bucket importado do Stack 01 (storage)
+          LANDING_BUCKET: !ImportValue
+            Fn::Sub: "${ProjectName}-${Group}-landing-bucket-name"
+          LOG_LEVEL: INFO
+
+      # Pacote ZIP carregado pelo script deploy_lambda.sh
+      Code:
+        S3Bucket: !Ref LambdaCodeS3Bucket
+        S3Key: !Ref LambdaCodeS3Key
+
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: Layer
+          Value: ingestion
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para referência em stacks futuros (ex: Step Functions)
+# ---------------------------------------------------------------------------
+Outputs:
+  LandingZoneIngestionFunctionName:
+    Description: Nome da Lambda de ingestão na Landing Zone
+    Value: !Ref LandingZoneIngestionFunction
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-landing-ingestion-function-name"
+
+  LandingZoneIngestionFunctionArn:
+    Description: ARN da Lambda de ingestão na Landing Zone
+    Value: !GetAtt LandingZoneIngestionFunction.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-landing-ingestion-function-arn"
