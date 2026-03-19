@@ -107,7 +107,39 @@ fi
 cp "$LAMBDA_SOURCE_DIR/handler.py" "$BUILD_DIR/handler.py"
 
 # Cria o ZIP a partir da pasta de build
-(cd "$BUILD_DIR" && zip -r "$ZIP_PATH" . -x "*.pyc" -x "__pycache__/*")
+echo "Criando ZIP do pacote usando Python (compatível com Windows)..."
+# Prefer python3, fallback to python
+PYTHON_CMD="$(command -v python3 || command -v python || true)"
+if [[ -z "$PYTHON_CMD" ]]; then
+  echo "Erro: Python não encontrado. O empacotamento requer Python 3 ou Python instalados."
+  exit 1
+fi
+
+"$PYTHON_CMD" - "$BUILD_DIR" "$ZIP_PATH" <<'PY'
+import os
+import sys
+import zipfile
+import fnmatch
+
+build_dir = sys.argv[1]
+zip_path = sys.argv[2]
+
+excl_patterns = ('*.pyc',)
+
+with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+  for root, dirs, files in os.walk(build_dir):
+    # skip __pycache__ directories entirely
+    if '__pycache__' in root:
+      continue
+    for fname in files:
+      if any(fnmatch.fnmatch(fname, pat) for pat in excl_patterns):
+        continue
+      fullpath = os.path.join(root, fname)
+      # arcname should be relative path inside the build dir
+      arcname = os.path.relpath(fullpath, build_dir)
+      zf.write(fullpath, arcname)
+print('ZIP criado em: {}'.format(zip_path))
+PY
 
 echo "Pacote criado em: $ZIP_PATH"
 
