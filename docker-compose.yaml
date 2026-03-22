@@ -1,0 +1,48 @@
+# ==============================================================================
+# FICHEIRO DOCKER-COMPOSE (Focado na Landing Zone)
+# ==============================================================================
+services:
+
+  # --- Serviço Principal: LocalStack (Simulador da AWS) ---
+  localstack:
+    image: localstack/localstack:latest  # <-- MUDADO: Removido o "-pro"
+    container_name: localstack_main
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3,lambda,iam,ssm
+      - LS_LOG=warn
+      - LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1  # <-- ADICIONADO: Contorna o bloqueio de licença
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - data_ingestion_net
+
+  # --- Serviço de Setup da AWS ---
+  aws-setup:
+    image: amazon/aws-cli:latest
+    container_name: aws_setup
+    user: root
+    depends_on:
+      - localstack
+    env_file:
+      - ./infrastructure/.env
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./:/aws
+    networks: 
+      - data_ingestion_net
+    entrypoint: ["/aws/aws-setup.sh"]
+
+# --- Volumes e Redes ---
+volumes:
+  localstack_data:
+
+networks:
+  data_ingestion_net:
+    driver: bridge
