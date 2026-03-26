@@ -83,7 +83,37 @@ fi
 echo "Bucket Landing Zone: $LANDING_BUCKET"
 
 # ---------------------------------------------------------------------------
-# Passo 2: Montar o pacote ZIP da Lambda
+# Passo 2: Publicar credenciais Kaggle no SSM Parameter Store
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Publicando credenciais Kaggle no SSM Parameter Store..."
+echo "===================================================================="
+
+if [[ -z "${KAGGLE_USERNAME:-}" ]] || [[ -z "${KAGGLE_KEY:-}" ]]; then
+  echo "Erro: KAGGLE_USERNAME e/ou KAGGLE_KEY não definidos."
+  echo "Defina-os no arquivo infrastructure/.env antes de continuar."
+  exit 1
+fi
+
+aws ssm put-parameter \
+  --region "$REGION" \
+  --name "/eedb015/kaggle/username" \
+  --value "$KAGGLE_USERNAME" \
+  --type "SecureString" \
+  --overwrite > /dev/null
+
+aws ssm put-parameter \
+  --region "$REGION" \
+  --name "/eedb015/kaggle/key" \
+  --value "$KAGGLE_KEY" \
+  --type "SecureString" \
+  --overwrite > /dev/null
+
+echo "Credenciais de '$KAGGLE_USERNAME' publicadas no SSM com sucesso."
+
+# ---------------------------------------------------------------------------
+# Passo 3: Montar o pacote ZIP da Lambda
 # ---------------------------------------------------------------------------
 echo ""
 echo "===================================================================="
