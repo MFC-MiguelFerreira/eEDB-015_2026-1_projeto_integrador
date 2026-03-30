@@ -83,7 +83,37 @@ fi
 echo "Bucket Landing Zone: $LANDING_BUCKET"
 
 # ---------------------------------------------------------------------------
-# Passo 2: Montar o pacote ZIP da Lambda
+# Passo 2: Publicar credenciais Kaggle no SSM Parameter Store
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Publicando credenciais Kaggle no SSM Parameter Store..."
+echo "===================================================================="
+
+if [[ -z "${KAGGLE_USERNAME:-}" ]] || [[ -z "${KAGGLE_KEY:-}" ]]; then
+  echo "Erro: KAGGLE_USERNAME e/ou KAGGLE_KEY não definidos."
+  echo "Defina-os no arquivo infrastructure/.env antes de continuar."
+  exit 1
+fi
+
+aws ssm put-parameter \
+  --region "$REGION" \
+  --name "/eedb015/kaggle/username" \
+  --value "$KAGGLE_USERNAME" \
+  --type "SecureString" \
+  --overwrite > /dev/null
+
+aws ssm put-parameter \
+  --region "$REGION" \
+  --name "/eedb015/kaggle/key" \
+  --value "$KAGGLE_KEY" \
+  --type "SecureString" \
+  --overwrite > /dev/null
+
+echo "Credenciais de '$KAGGLE_USERNAME' publicadas no SSM com sucesso."
+
+# ---------------------------------------------------------------------------
+# Passo 3: Montar o pacote ZIP da Lambda
 # ---------------------------------------------------------------------------
 echo ""
 echo "===================================================================="
@@ -97,7 +127,8 @@ mkdir -p "$BUILD_DIR"
 # Instala dependências na pasta de build
 if [[ -f "$LAMBDA_SOURCE_DIR/requirements.txt" ]]; then
   echo "Instalando dependências de requirements.txt..."
-  pip install \
+  # No Windows, usamos 'python -m pip' para garantir que usemos o pip do Python 3.12
+  python -m pip install \
     --quiet \
     --requirement "$LAMBDA_SOURCE_DIR/requirements.txt" \
     --target "$BUILD_DIR"
@@ -106,16 +137,9 @@ fi
 # Copia o código-fonte para a raiz do pacote
 cp "$LAMBDA_SOURCE_DIR/handler.py" "$BUILD_DIR/handler.py"
 
-# Cria o ZIP a partir da pasta de build
+# Cria o ZIP a partir da pasta de build usando Python puro
 echo "Criando ZIP do pacote usando Python (compatível com Windows)..."
-# Prefer python3, fallback to python
-PYTHON_CMD="$(command -v python3 || command -v python || true)"
-if [[ -z "$PYTHON_CMD" ]]; then
-  echo "Erro: Python não encontrado. O empacotamento requer Python 3 ou Python instalados."
-  exit 1
-fi
-
-"$PYTHON_CMD" - "$BUILD_DIR" "$ZIP_PATH" <<'PY'
+python - "$BUILD_DIR" "$ZIP_PATH" <<'PY'
 import os
 import sys
 import zipfile
@@ -127,21 +151,21 @@ zip_path = sys.argv[2]
 excl_patterns = ('*.pyc',)
 
 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-  for root, dirs, files in os.walk(build_dir):
-    # skip __pycache__ directories entirely
-    if '__pycache__' in root:
-      continue
-    for fname in files:
-      if any(fnmatch.fnmatch(fname, pat) for pat in excl_patterns):
-        continue
-      fullpath = os.path.join(root, fname)
-      # arcname should be relative path inside the build dir
-      arcname = os.path.relpath(fullpath, build_dir)
-      zf.write(fullpath, arcname)
-print('ZIP criado em: {}'.format(zip_path))
+    for root, dirs, files in os.walk(build_dir):
+        # pula diretórios __pycache__ inteiros
+        if '__pycache__' in root:
+            continue
+        for fname in files:
+            if any(fnmatch.fnmatch(fname, pat) for pat in excl_patterns):
+                continue
+            fullpath = os.path.join(root, fname)
+            # arcname deve ser o caminho relativo dentro do diretório de build
+            arcname = os.path.relpath(fullpath, build_dir)
+            zf.write(fullpath, arcname)
+print(f'ZIP criado com sucesso em: {zip_path}')
 PY
 
-echo "Pacote criado em: $ZIP_PATH"
+echo "Pacote pronto para upload."
 
 # ---------------------------------------------------------------------------
 # Passo 3: Upload do pacote para o bucket Landing Zone

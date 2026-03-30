@@ -115,5 +115,3 @@ O script automaticamente:
 O script remove o Stack 02 (Lambda + CloudWatch Log Group) e também apaga o pacote ZIP do bucket Landing Zone (que não é um recurso CloudFormation e precisa de limpeza explícita).
 
 > **Ordem recomendada para remoção completa:** destruir o Stack 02 antes do Stack 01.
-
-.

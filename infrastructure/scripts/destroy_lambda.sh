@@ -104,5 +104,22 @@ else
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# Passo 3: Remover credenciais Kaggle do SSM Parameter Store
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Removendo credenciais Kaggle do SSM Parameter Store..."
+echo "===================================================================="
+
+for PARAM in "/eedb015/kaggle/username" "/eedb015/kaggle/key"; do
+  if aws ssm get-parameter --region "$REGION" --name "$PARAM" > /dev/null 2>&1; then
+    aws ssm delete-parameter --region "$REGION" --name "$PARAM"
+    echo "Parâmetro '$PARAM' removido."
+  else
+    echo "Parâmetro '$PARAM' não encontrado (já removido ou nunca criado)."
+  fi
+done
+
 echo ""
 echo "Remoção concluída."
