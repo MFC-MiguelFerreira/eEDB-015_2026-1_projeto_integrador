@@ -9,7 +9,8 @@ infrastructure/
 ├── cloudformation/
 │   ├── stacks/                   # Templates CloudFormation, numerados por ordem de deploy
 │   │   ├── 01-storage.yaml
-│   │   └── 02-lambda-ingestion.yaml
+│   │   ├── 02-lambda-ingestion.yaml
+│   │   └── 03-glue-catalog.yaml
 │   └── parameters/               # Valores de parâmetros por ambiente
 │       └── dev.json
 ├── scripts/
@@ -44,6 +45,7 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 | --- | ------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------- |
 | 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena                                    | `deploy.sh 01-storage`        |
 | 02  | `02-lambda-ingestion`    | Função Lambda que baixa os CSVs do Kaggle e salva na Landing Zone + CloudWatch Log Group         | `deploy_lambda.sh`            |
+| 03  | `03-glue-catalog`        | Glue Databases (Bronze, Silver, Gold) + Athena Workgroup apontando para os buckets do Stack 01   | `deploy.sh 03-glue-catalog`   |
 
 ### Stack 02 — Lambda de Ingestão
 
@@ -67,6 +69,28 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 | --------------------------------------------- | ---------------------------- |
 | `eedb015-g05-landing-ingestion-function-name` | Nome da função Lambda        |
 | `eedb015-g05-landing-ingestion-function-arn`  | ARN da função Lambda         |
+
+### Stack 03 — Glue Data Catalog
+
+**Recursos criados:**
+
+| Recurso                | Tipo                        | Detalhes                                                                                              |
+| ---------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `GlueDatabaseBronze`   | `AWS::Glue::Database`       | Database `eedb015_bronze` · `LocationUri` aponta para o bucket Bronze do Stack 01                    |
+| `GlueDatabaseSilver`   | `AWS::Glue::Database`       | Database `eedb015_silver` · `LocationUri` aponta para o bucket Silver do Stack 01                    |
+| `GlueDatabaseGold`     | `AWS::Glue::Database`       | Database `eedb015_gold` · `LocationUri` aponta para o bucket Gold do Stack 01                        |
+| `AthenaWorkgroup`      | `AWS::Athena::WorkGroup`    | Workgroup `eedb015-g05` · resultados no bucket athena-results · limite de 1 GB de scan por query     |
+
+**Outputs exportados (para stacks de ETL: Glue Jobs, Step Functions):**
+
+| Export                                   | Valor                             |
+| ---------------------------------------- | --------------------------------- |
+| `eedb015-g05-bronze-database-name`       | Nome do Glue Database Bronze      |
+| `eedb015-g05-silver-database-name`       | Nome do Glue Database Silver      |
+| `eedb015-g05-gold-database-name`         | Nome do Glue Database Gold        |
+| `eedb015-g05-athena-workgroup-name`      | Nome do Athena Workgroup          |
+
+> **Dependência:** o Stack 03 importa os nomes dos buckets do Stack 01 via `!ImportValue`. O CloudFormation impede que o Stack 01 seja destruído enquanto o Stack 03 existir.
 
 ## Como fazer deploy
 
@@ -96,6 +120,15 @@ O script automaticamente:
 
 > **Pré-requisito:** o Stack 01 (`01-storage`) deve estar implantado antes do Stack 02.
 
+### Stack 03 — Glue Data Catalog
+
+```bash
+# Da raiz do repositório:
+./infrastructure/scripts/deploy.sh 03-glue-catalog
+```
+
+> **Pré-requisito:** o Stack 01 (`01-storage`) deve estar implantado antes do Stack 03, pois ele importa os nomes dos buckets via `!ImportValue`.
+
 ## Como remover um stack
 
 ### Stack 01 — Storage
@@ -114,4 +147,12 @@ O script automaticamente:
 
 O script remove o Stack 02 (Lambda + CloudWatch Log Group) e também apaga o pacote ZIP do bucket Landing Zone (que não é um recurso CloudFormation e precisa de limpeza explícita).
 
-> **Ordem recomendada para remoção completa:** destruir o Stack 02 antes do Stack 01.
+### Stack 03 — Glue Data Catalog
+
+```bash
+./infrastructure/scripts/destroy.sh 03-glue-catalog
+```
+
+Remove os três Glue Databases e o Athena Workgroup. As tabelas catalogadas dentro dos databases também são removidas, mas **os dados nos buckets S3 não são afetados**.
+
+> **Ordem recomendada para remoção completa:** destruir o Stack 03 antes do Stack 01 (o CloudFormation bloqueia a remoção do Stack 01 enquanto existirem `!ImportValue` ativos apontando para ele).

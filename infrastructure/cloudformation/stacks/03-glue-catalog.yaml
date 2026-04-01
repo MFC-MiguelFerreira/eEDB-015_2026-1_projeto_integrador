@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Glue Data Catalog do Data Lake — Health Insurance Marketplace (eEDB-015).
+  Cria os databases do Glue para as camadas Bronze, Silver e Gold,
+  apontando para os respectivos buckets S3 criados no stack 01-storage.
+  Também provisiona um Workgroup do Athena configurado com o bucket de resultados.
+  DEPENDÊNCIA: stack 01-storage deve estar implantado primeiro.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Mesmo valor usado no stack 01-storage.
+
+  Group:
+    Type: String
+    Default: g05
+    AllowedPattern: "[a-z0-9]+"
+    Description: Mesmo valor usado no stack 01-storage.
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- Glue Database — Bronze ----------------------------------------
+  # Aponta para o bucket Bronze importado do stack de storage.
+  # Armazena os metadados das tabelas com os CSVs brutos versionados.
+  GlueDatabaseBronze:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub "${ProjectName}_bronze"
+        Description: "Camada Bronze — dados brutos do Health Insurance Marketplace, particionados por year/state"
+        LocationUri: !Sub
+          - "s3://${BucketName}/"
+          - BucketName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-bronze-bucket-name"
+        Parameters:
+          layer: bronze
+          project: !Ref ProjectName
+          group: !Ref Group
+
+  # ---------- Glue Database — Silver ----------------------------------------
+  # Aponta para o bucket Silver importado do stack de storage.
+  # Tabelas em Parquet (Snappy) com Crosswalk aplicado.
+  GlueDatabaseSilver:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub "${ProjectName}_silver"
+        Description: "Camada Silver — dados limpos em Parquet, Crosswalk aplicado, preços anonimizados"
+        LocationUri: !Sub
+          - "s3://${BucketName}/"
+          - BucketName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-silver-bucket-name"
+        Parameters:
+          layer: silver
+          project: !Ref ProjectName
+          group: !Ref Group
+
+  # ---------- Glue Database — Gold ------------------------------------------
+  # Aponta para o bucket Gold importado do stack de storage.
+  # Agregados e métricas prontos para consulta via Athena.
+  GlueDatabaseGold:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub "${ProjectName}_gold"
+        Description: "Camada Gold — agregados e métricas prontos para análise via Athena"
+        LocationUri: !Sub
+          - "s3://${BucketName}/"
+          - BucketName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-gold-bucket-name"
+        Parameters:
+          layer: gold
+          project: !Ref ProjectName
+          group: !Ref Group
+
+  # ---------- Athena Workgroup ----------------------------------------------
+  # Workgroup dedicado ao projeto, aponta para o bucket de resultados.
+  # Impõe limite de dados escaneados por query para controle de custo
+  # (importante no AWS Learner Lab com créditos limitados).
+  AthenaWorkgroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub "${ProjectName}-${Group}"
+      Description: "Workgroup Athena do projeto eEDB-015 — Health Insurance Marketplace"
+      State: ENABLED
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub
+            - "s3://${BucketName}/results/"
+            - BucketName: !ImportValue
+                Fn::Sub: "${ProjectName}-${Group}-athena-results-bucket-name"
+          EncryptionConfiguration:
+            EncryptionOption: SSE_S3
+        # Limite de 1 GB por query — evita scans acidentais nos arquivos de Rate
+        # (que têm milhões de linhas). Ajuste conforme necessário.
+        BytesScannedCutoffPerQuery: 1073741824   # 1 GB em bytes
+        EnforceWorkGroupConfiguration: true
+        PublishCloudWatchMetricsEnabled: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para stacks de ETL (Glue Jobs, Step Functions)
+# ---------------------------------------------------------------------------
+Outputs:
+  BronzeDatabaseName:
+    Description: Nome do Glue Database da camada Bronze
+    Value: !Ref GlueDatabaseBronze
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-bronze-database-name"
+
+  SilverDatabaseName:
+    Description: Nome do Glue Database da camada Silver
+    Value: !Ref GlueDatabaseSilver
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-silver-database-name"
+
+  GoldDatabaseName:
+    Description: Nome do Glue Database da camada Gold
+    Value: !Ref GlueDatabaseGold
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-gold-database-name"
+
+  AthenaWorkgroupName:
+    Description: Nome do Workgroup do Athena
+    Value: !Ref AthenaWorkgroup
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-athena-workgroup-name"
