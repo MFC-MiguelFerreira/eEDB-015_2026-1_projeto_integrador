@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+# =============================================================================
+# deploy_glue_jobs.sh — Faz upload dos scripts Glue para S3 e implanta o
+#                        stack 04 (Glue Job Landing → Bronze)
+#
+# Uso:
+#   ./infrastructure/scripts/deploy_glue_jobs.sh [parametros]
+#
+# Exemplos:
+#   ./infrastructure/scripts/deploy_glue_jobs.sh          # usa dev.json
+#   ./infrastructure/scripts/deploy_glue_jobs.sh dev
+#
+# Pré-requisitos:
+#   1. Stack 01 (01-storage) implantado via deploy.sh 01-storage
+#   2. Stack 03 (03-glue-catalog) implantado via deploy.sh 03-glue-catalog
+#   3. Credenciais AWS configuradas em infrastructure/.env
+#
+# O que este script faz:
+#   1. Carrega credenciais do .env
+#   2. Obtém o nome do bucket Landing Zone nos Outputs do Stack 01
+#   3. Faz upload de todos os scripts em src/glue_jobs/ para
+#      s3://{landing-bucket}/glue-scripts/
+#   4. Implanta (ou atualiza) o Stack 04 via CloudFormation
+# =============================================================================
+
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Carrega credenciais do .env (se existir)
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../.env"
+
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  set -a && source "$ENV_FILE" && set +a
+  echo "Credenciais carregadas de $ENV_FILE"
+fi
+
+# ---------------------------------------------------------------------------
+# Configuração
+# ---------------------------------------------------------------------------
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../" && pwd)"
+PARAMS_ENV="${1:-dev}"
+
+STACK_01_NAME="eEDB015-01-storage"
+STACK_04_NAME="eEDB015-04-glue-bronze"
+TEMPLATE="$SCRIPT_DIR/../cloudformation/stacks/04-glue-bronze.yaml"
+PARAMS_FILE="$SCRIPT_DIR/../cloudformation/parameters/${PARAMS_ENV}.json"
+GLUE_SCRIPTS_DIR="$PROJECT_ROOT/src/glue_jobs"
+S3_SCRIPTS_PREFIX="glue-scripts"
+
+# ---------------------------------------------------------------------------
+# Validações
+# ---------------------------------------------------------------------------
+if [[ ! -f "$TEMPLATE" ]]; then
+  echo "Erro: template não encontrado em $TEMPLATE"
+  exit 1
+fi
+
+if [[ ! -f "$PARAMS_FILE" ]]; then
+  echo "Erro: arquivo de parâmetros não encontrado em $PARAMS_FILE"
+  exit 1
+fi
+
+if [[ ! -d "$GLUE_SCRIPTS_DIR" ]]; then
+  echo "Erro: diretório de scripts Glue não encontrado em $GLUE_SCRIPTS_DIR"
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Passo 1: Obter o nome do bucket Landing Zone (Output do Stack 01)
+# ---------------------------------------------------------------------------
+echo "===================================================================="
+echo " Buscando bucket Landing Zone no Stack '$STACK_01_NAME'..."
+echo "===================================================================="
+
+LANDING_BUCKET=$(aws cloudformation describe-stacks \
+  --region "$REGION" \
+  --stack-name "$STACK_01_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='LandingZoneBucketName'].OutputValue" \
+  --output text)
+
+if [[ -z "$LANDING_BUCKET" ]]; then
+  echo "Erro: não foi possível obter o nome do bucket Landing Zone."
+  echo "Verifique se o Stack '$STACK_01_NAME' está implantado e com status CREATE_COMPLETE."
+  exit 1
+fi
+
+echo "Bucket Landing Zone: $LANDING_BUCKET"
+
+# ---------------------------------------------------------------------------
+# Passo 2: Upload dos scripts Glue para o bucket Landing Zone
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Enviando scripts Glue para s3://$LANDING_BUCKET/$S3_SCRIPTS_PREFIX/"
+echo "===================================================================="
+
+SCRIPTS_FOUND=0
+for script in "$GLUE_SCRIPTS_DIR"/*.py; do
+  # Ignora se não houver nenhum .py (glob sem match retorna o padrão literal)
+  [[ -f "$script" ]] || continue
+  filename="$(basename "$script")"
+  aws s3 cp "$script" "s3://$LANDING_BUCKET/$S3_SCRIPTS_PREFIX/$filename" --region "$REGION"
+  echo "  Upload concluído: $filename"
+  SCRIPTS_FOUND=$((SCRIPTS_FOUND + 1))
+done
+
+if [[ $SCRIPTS_FOUND -eq 0 ]]; then
+  echo "Erro: nenhum script .py encontrado em $GLUE_SCRIPTS_DIR"
+  exit 1
+fi
+
+echo "$SCRIPTS_FOUND script(s) enviado(s)."
+
+# ---------------------------------------------------------------------------
+# Passo 3: Implantar (ou atualizar) o Stack 04
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Stack   : $STACK_04_NAME"
+echo " Template: $TEMPLATE"
+echo " Params  : $PARAMS_FILE + GlueJobScriptsBucket"
+echo " Região  : $REGION"
+echo "===================================================================="
+
+# Lê o JSON de parâmetros e converte para o formato Key=Value esperado pela CLI.
+# Mesmo padrão usado no deploy_lambda.sh.
+PARAMS=()
+while IFS= read -r param; do
+  PARAMS+=("$param")
+done < <(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' "$PARAMS_FILE")
+PARAMS+=("GlueJobScriptsBucket=$LANDING_BUCKET")
+
+aws cloudformation deploy \
+  --region "$REGION" \
+  --template-file "$TEMPLATE" \
+  --stack-name "$STACK_04_NAME" \
+  --parameter-overrides "${PARAMS[@]}" \
+  --capabilities CAPABILITY_IAM \
+  --no-fail-on-empty-changeset
+
+echo ""
+echo "Stack '$STACK_04_NAME' implantado com sucesso."
+echo ""
+
+# Exibe os Outputs do stack
+echo "---- Outputs -------------------------------------------------------"
+aws cloudformation describe-stacks \
+  --region "$REGION" \
+  --stack-name "$STACK_04_NAME" \
+  --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+  --output table
