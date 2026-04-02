@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Glue Job: Landing Zone → Bronze (Iceberg) — eEDB-015.
+  Processa os CSVs da Landing Zone e cria tabelas Iceberg particionadas por year
+  no database Bronze, sem modificar os dados.
+  DEPENDÊNCIAS: stacks 01-storage e 03-glue-catalog devem estar implantados.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+  Group:
+    Type: String
+    Default: g05
+    AllowedPattern: "[a-z0-9]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+  GlueJobScriptsBucket:
+    Type: String
+    Description: >
+      Nome do bucket S3 onde o script landing_to_bronze.py foi carregado
+      pelo deploy_glue_jobs.sh (tipicamente o bucket Landing Zone).
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- Glue Job -------------------------------------------------------
+  # Lê CSVs da Landing Zone → escreve tabelas Iceberg no database Bronze.
+  # Usa LabRole (obrigatório no AWS Academy — não é possível criar roles).
+  GlueJobLandingToBronze:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-landing-to-bronze"
+      Description: >
+        Ingestão Landing Zone → Bronze: CSV → Iceberg (Parquet/Snappy).
+        Uma tabela por tipo de arquivo, particionada por year, sem alteração dos dados.
+      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+      GlueVersion: "5.0"
+      # G.1X: 4 vCPUs / 16 GB. Suficiente para os CSVs do dataset.
+      # Aumentar para G.2X se Rate.csv causar OOM durante o unionByName.
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      # Timeout generoso para o arquivo Rate.csv (maior do dataset)
+      Timeout: 120
+      MaxRetries: 0
+      Command:
+        Name: glueetl
+        PythonVersion: "3"
+        ScriptLocation: !Sub "s3://${GlueJobScriptsBucket}/glue-scripts/landing_to_bronze.py"
+      DefaultArguments:
+        "--job-language": "python"
+        # Bookmark desativado: o script controla idempotência por partição Iceberg
+        "--job-bookmark-option": "job-bookmark-disable"
+        # Ativa suporte nativo a Iceberg no Glue 4.0:
+        # registra automaticamente o catálogo 'glue_catalog' e as extensões Spark
+        "--datalake-formats": "iceberg"
+        "--enable-glue-datacatalog": "true"
+        # Logs contínuos no CloudWatch (útil para monitorar arquivos grandes)
+        "--enable-continuous-cloudwatch-log": "true"
+        "--enable-metrics": "true"
+        # Parâmetros do script — importados dos stacks anteriores
+        "--LANDING_BUCKET": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-landing-bucket-name"
+        "--BRONZE_BUCKET": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-bronze-bucket-name"
+        "--BRONZE_DATABASE": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-bronze-database-name"
+      Tags:
+        Project: !Ref ProjectName
+        Group: !Ref Group
+        ManagedBy: CloudFormation
+
+  # ---------- CloudWatch Log Group -------------------------------------------
+  # Retém logs do job por 7 dias para economizar crédito do Learner Lab.
+  GlueJobLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws-glue/jobs/${ProjectName}-landing-to-bronze"
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para stacks de orquestração (Step Functions)
+# ---------------------------------------------------------------------------
+Outputs:
+  GlueJobName:
+    Description: Nome do Glue Job Landing Zone → Bronze
+    Value: !Ref GlueJobLandingToBronze
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-landing-to-bronze-job-name"

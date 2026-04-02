@@ -46,6 +46,7 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 | 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena                                    | `deploy.sh 01-storage`        |
 | 02  | `02-lambda-ingestion`    | Função Lambda que baixa os CSVs do Kaggle e salva na Landing Zone + CloudWatch Log Group         | `deploy_lambda.sh`            |
 | 03  | `03-glue-catalog`        | Glue Databases (Bronze, Silver, Gold) + Athena Workgroup apontando para os buckets do Stack 01   | `deploy.sh 03-glue-catalog`   |
+| 04  | `04-glue-bronze`         | Glue Job 5.0 (Landing → Bronze): CSV → tabelas Iceberg/Snappy particionadas por year             | `deploy_glue_jobs.sh`         |
 
 ### Stack 02 — Lambda de Ingestão
 
@@ -92,6 +93,33 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 
 > **Dependência:** o Stack 03 importa os nomes dos buckets do Stack 01 via `!ImportValue`. O CloudFormation impede que o Stack 01 seja destruído enquanto o Stack 03 existir.
 
+### Stack 04 — Glue Job Landing → Bronze
+
+**Recursos criados:**
+
+| Recurso                    | Tipo                     | Detalhes                                                                                                      |
+| -------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `GlueJobLandingToBronze`   | `AWS::Glue::Job`         | Glue 5.0 · Spark 3.5.2 · Python 3.11 · Iceberg 1.6.1 · G.1X × 2 workers · Timeout 120 min · Role `LabRole` |
+| `GlueJobLogGroup`          | `AWS::Logs::LogGroup`    | `/aws-glue/jobs/eedb015-landing-to-bronze` · Retenção de 7 dias                                              |
+
+**Comportamento do job (`src/glue_jobs/landing_to_bronze.py`):**
+
+- Descobre todos os CSVs em `s3://{landing}/raw/health_insurance/YYYY/NomeArquivo.csv`
+- Cria **uma tabela por tipo de arquivo** no database Bronze (ex: `rate`, `plan_attributes`, `service_area`)
+- Dados não são modificados: todos os campos lidos como `string` (`inferSchema=false`)
+- Adiciona coluna `year` (int) extraída do caminho — partição de cada tabela Iceberg
+- Idempotente: re-executar sobrescreve apenas as partições processadas (`.overwritePartitions()`)
+
+**Parâmetro opcional `--YEAR`:** reprocessa apenas um ano sem tocar os demais.
+
+**Outputs exportados (para stack de orquestração: Step Functions):**
+
+| Export                                         | Valor                             |
+| ---------------------------------------------- | --------------------------------- |
+| `eedb015-g05-landing-to-bronze-job-name`       | Nome do Glue Job                  |
+
+> **Dependências:** os Stacks 01 e 03 devem estar implantados antes do Stack 04.
+
 ## Como fazer deploy
 
 ### Stack 01 — Storage
@@ -129,6 +157,34 @@ O script automaticamente:
 
 > **Pré-requisito:** o Stack 01 (`01-storage`) deve estar implantado antes do Stack 03, pois ele importa os nomes dos buckets via `!ImportValue`.
 
+### Stack 04 — Glue Job Landing → Bronze
+
+O Stack 04 tem um processo de deploy próprio pois inclui upload do script PySpark para o S3:
+
+```bash
+# Da raiz do repositório:
+./infrastructure/scripts/deploy_glue_jobs.sh
+```
+
+O script automaticamente:
+1. Busca o nome do bucket Landing Zone nos Outputs do Stack 01
+2. Faz upload de todos os scripts `src/glue_jobs/*.py` para `s3://{landing-bucket}/glue-scripts/`
+3. Implanta (ou atualiza) o Stack 04 via CloudFormation
+
+> **Pré-requisitos:** os Stacks 01 e 03 devem estar implantados antes do Stack 04.
+
+Para executar o job após o deploy:
+
+```bash
+# Processa todos os anos disponíveis na Landing Zone
+aws glue start-job-run --job-name eedb015-landing-to-bronze
+
+# Reprocessa apenas um ano específico (idempotente)
+aws glue start-job-run \
+  --job-name eedb015-landing-to-bronze \
+  --arguments '{"--YEAR": "2015"}'
+```
+
 ## Como remover um stack
 
 ### Stack 01 — Storage
@@ -155,4 +211,12 @@ O script remove o Stack 02 (Lambda + CloudWatch Log Group) e também apaga o pac
 
 Remove os três Glue Databases e o Athena Workgroup. As tabelas catalogadas dentro dos databases também são removidas, mas **os dados nos buckets S3 não são afetados**.
 
-> **Ordem recomendada para remoção completa:** destruir o Stack 03 antes do Stack 01 (o CloudFormation bloqueia a remoção do Stack 01 enquanto existirem `!ImportValue` ativos apontando para ele).
+> **Ordem recomendada para remoção completa:** destruir o Stack 04, depois o Stack 03, e por último o Stack 01 (o CloudFormation bloqueia a remoção de stacks enquanto existirem `!ImportValue` ativos apontando para eles).
+
+### Stack 04 — Glue Job Landing → Bronze
+
+```bash
+./infrastructure/scripts/destroy.sh 04-glue-bronze
+```
+
+Remove o Glue Job e o CloudWatch Log Group. Os scripts `.py` em `s3://{landing-bucket}/glue-scripts/` **não são removidos** (não são recursos CloudFormation) — apague-os manualmente se necessário.
