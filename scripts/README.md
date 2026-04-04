@@ -1,0 +1,47 @@
+# scripts/ — Notebooks de Desenvolvimento e Teste Local
+
+Esta pasta contém notebooks Jupyter usados para **desenvolvimento e validação** dos scripts ETL do projeto. Eles são projetados para rodar no ambiente local do Dev Container, sem custos de Glue no AWS Academy.
+
+## Relação com os Glue Jobs
+
+Os notebooks aqui são a **fase de prototipação**. O fluxo de trabalho é:
+
+```
+scripts/*.ipynb         →   (validado)   →   src/glue_jobs/*.py
+  (desenvolvimento                           (versão final para
+   e teste local)                             deploy no AWS Glue)
+```
+
+Cada notebook corresponde a um Glue Job. Uma vez que a lógica está validada no notebook, o código é adaptado para script `.py` em `src/glue_jobs/`, substituindo as variáveis locais pelos parâmetros do job (`getResolvedOptions`).
+
+## Notebooks disponíveis
+
+| Notebook | Glue Job correspondente | Descrição |
+|---|---|---|
+| `landing_to_bronze.ipynb` | `src/glue_jobs/landing_to_bronze.py` | Ingere CSVs da Landing Zone e grava tabelas Iceberg na camada Bronze |
+
+## Como executar
+
+Os notebooks devem ser executados **dentro do Dev Container**, que fornece o runtime do AWS Glue (PySpark + `awsglue` + extensões Iceberg) e as credenciais AWS configuradas.
+
+Consulte o [README do Dev Container](../.devcontainer/README.md) para instruções de como abrir o ambiente e configurar as credenciais do AWS Academy.
+
+### Passos rápidos
+
+1. Abra o projeto no Dev Container (`Ctrl+Shift+P` → **Dev Containers: Reopen in Container**).
+2. Atualize as credenciais AWS via task **Refresh AWS Credentials** se a sessão do Learner Lab tiver expirado.
+3. Abra o notebook desejado.
+4. Selecione o kernel **Python 3.11.14** no canto superior direito do notebook.
+5. Execute as células sequencialmente.
+
+> O kernel **Python 3.11.14** corresponde ao ambiente Conda `vscode_pyspark` configurado no container, que já inclui PySpark, `awsglue` e todas as dependências necessárias. Selecionar outro kernel resultará em erros de importação.
+
+## Diferenças entre notebook e script de produção
+
+Os notebooks têm algumas adaptações para execução local que **não existem** nos scripts de produção:
+
+| Aspecto | Notebook (`scripts/`) | Script de produção (`src/glue_jobs/`) |
+|---|---|---|
+| Parâmetros | Variáveis hardcoded no notebook | `getResolvedOptions(sys.argv, [...])` |
+| Limite de tabelas | `LOCAL_TABLE_LIMIT = 3` (evita sobrecarga) | Sem limite — processa tudo |
+| Inicialização do Job | Comentado | `job = Job(glue_ctx); job.init(...)` |
