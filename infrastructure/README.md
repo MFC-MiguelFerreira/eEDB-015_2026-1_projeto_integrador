@@ -10,7 +10,9 @@ infrastructure/
 │   ├── stacks/                   # Templates CloudFormation, numerados por ordem de deploy
 │   │   ├── 01-storage.yaml
 │   │   ├── 02-lambda-ingestion.yaml
-│   │   └── 03-glue-catalog.yaml
+│   │   ├── 03-glue-catalog.yaml
+│   │   ├── 04-glue-bronze.yaml
+│   │   └── 05-step-functions.yaml
 │   └── parameters/               # Valores de parâmetros por ambiente
 │       └── dev.json
 ├── scripts/
@@ -18,7 +20,8 @@ infrastructure/
 │   ├── destroy.sh                # Remove os stacks 01, 03, ... (com confirmação)
 │   ├── deploy_lambda.sh          # Empacota e implanta a Lambda de ingestão (Stack 02)
 │   ├── destroy_lambda.sh         # Remove a Lambda de ingestão e o pacote ZIP do S3
-│   └── deploy_glue_jobs.sh       # Faz upload dos scripts Glue para S3 e implanta o Stack 04
+│   ├── deploy_glue_jobs.sh       # Faz upload dos scripts Glue para S3 e implanta o Stack 04
+│   └── deploy_step_functions.sh  # Implanta a orquestração Step Functions (Stack 05)
 ├── .env.example                  # Modelo de credenciais (versionado)
 └── .env                          # Credenciais reais — NÃO commitado (.gitignore)
 ```
@@ -42,12 +45,13 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 
 ## Stacks disponíveis
 
-| #   | Stack                    | Descrição                                                                                        | Script de deploy              |
-| --- | ------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------- |
-| 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena Results                            | `deploy.sh 01-storage`        |
-| 02  | `02-lambda-ingestion`    | Função Lambda que baixa os CSVs do Kaggle e salva na Landing Zone + CloudWatch Log Group         | `deploy_lambda.sh`            |
-| 03  | `03-glue-catalog`        | Glue Databases (Bronze, Silver, Gold) + Athena Workgroup apontando para os buckets do Stack 01   | `deploy.sh 03-glue-catalog`   |
-| 04  | `04-glue-bronze`         | Glue Job 5.0 (Landing → Bronze): CSV → tabelas Iceberg/Snappy particionadas por year             | `deploy_glue_jobs.sh`         |
+| #   | Stack                    | Descrição                                                                                        | Script de deploy                |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------- |
+| 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena Results                            | `deploy.sh 01-storage`          |
+| 02  | `02-lambda-ingestion`    | Função Lambda que baixa os CSVs do Kaggle e salva na Landing Zone + CloudWatch Log Group         | `deploy_lambda.sh`              |
+| 03  | `03-glue-catalog`        | Glue Databases (Bronze, Silver, Gold) + Athena Workgroup apontando para os buckets do Stack 01   | `deploy.sh 03-glue-catalog`     |
+| 04  | `04-glue-bronze`         | Glue Job 5.0 (Landing → Bronze): CSV → tabelas Iceberg/Snappy particionadas por year             | `deploy_glue_jobs.sh`           |
+| 05  | `05-step-functions`      | Step Functions Standard: orquestra Lambda de ingestão → Glue Job Landing→Bronze em sequência     | `deploy_step_functions.sh`      |
 
 ### Stack 02 — Lambda de Ingestão
 
@@ -121,6 +125,46 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 
 > **Dependências:** os Stacks 01 e 03 devem estar implantados antes do Stack 04.
 
+### Stack 05 — Step Functions (Pipeline Health Insurance)
+
+**Recursos criados:**
+
+| Recurso                      | Tipo                                   | Detalhes                                                                                              |
+| ---------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HealthInsurancePipeline`    | `AWS::StepFunctions::StateMachine`     | Standard Workflow · Role `LabRole` · Logging nível ERROR · definição embutida no template             |
+| `StateMachineLogGroup`       | `AWS::Logs::LogGroup`                  | `/aws/states/eedb015-g05-health-insurance-pipeline` · Retenção de 7 dias                             |
+
+**Fluxo da máquina de estados (`src/step_functions/health_insurance_pipeline.json`):**
+
+```
+InvokeLandingIngestion  →  CheckIngestionResult  →  StartLandingToBronze  →  PipelineSucceeded
+       (Lambda)               (Choice State)           (Glue Job .sync)
+                                  │
+                            statusCode 500
+                                  ↓
+                           IngestionFailed
+```
+
+**Estados e integrações:**
+
+| Estado                    | Tipo     | Integração                               | Timeout   |
+| ------------------------- | -------- | ---------------------------------------- | --------- |
+| `InvokeLandingIngestion`  | Task     | `lambda:invoke` (síncrono)               | 16 min    |
+| `CheckIngestionResult`    | Choice   | Verifica `statusCode` (200/207 → avança) | —         |
+| `StartLandingToBronze`    | Task     | `glue:startJobRun.sync:2` (polling auto) | 130 min   |
+| `PipelineSucceeded`       | Succeed  | —                                        | —         |
+| `IngestionFailed`         | Fail     | —                                        | —         |
+| `BronzeFailed`            | Fail     | —                                        | —         |
+
+**Outputs exportados:**
+
+| Export                                              | Valor                              |
+| --------------------------------------------------- | ---------------------------------- |
+| `eedb015-g05-pipeline-state-machine-name`           | Nome da State Machine              |
+| `eedb015-g05-pipeline-state-machine-arn`            | ARN da State Machine               |
+
+> **Dependências:** os Stacks 02 e 04 devem estar implantados antes do Stack 05 (o script valida isso automaticamente).
+
 ## Como fazer deploy
 
 ### Stack 01 — Storage
@@ -186,6 +230,34 @@ aws glue start-job-run \
   --arguments '{"--YEAR": "2015"}'
 ```
 
+### Stack 05 — Step Functions
+
+```bash
+# Da raiz do repositório:
+./infrastructure/scripts/deploy_step_functions.sh
+```
+
+O script automaticamente:
+1. Verifica se os Stacks 02 e 04 estão com status `CREATE_COMPLETE` ou `UPDATE_COMPLETE`
+2. Implanta (ou atualiza) o Stack 05 via CloudFormation
+3. Exibe o ARN da máquina de estados com o comando pronto para iniciar uma execução
+
+> **Pré-requisitos:** os Stacks 02 (`deploy_lambda.sh`) e 04 (`deploy_glue_jobs.sh`) devem estar implantados antes do Stack 05.
+
+Para iniciar o pipeline após o deploy:
+
+```bash
+# Executa o pipeline completo (todos os arquivos da Landing Zone)
+aws stepfunctions start-execution \
+  --state-machine-arn <ARN exibido pelo deploy_step_functions.sh> \
+  --input '{}'
+
+# Executa o pipeline filtrando arquivos específicos para a Lambda
+aws stepfunctions start-execution \
+  --state-machine-arn <ARN exibido pelo deploy_step_functions.sh> \
+  --input '{"files": ["2014/Rate.csv", "2014/PlanAttributes.csv"]}'
+```
+
 ## Como remover um stack
 
 ### Stack 01 — Storage
@@ -221,3 +293,13 @@ Remove os três Glue Databases e o Athena Workgroup. As tabelas catalogadas dent
 ```
 
 Remove o Glue Job e o CloudWatch Log Group. Os scripts `.py` em `s3://{landing-bucket}/glue-scripts/` **não são removidos** (não são recursos CloudFormation) — apague-os manualmente se necessário.
+
+### Stack 05 — Step Functions
+
+```bash
+./infrastructure/scripts/destroy.sh 05-step-functions
+```
+
+Remove a State Machine e o CloudWatch Log Group. Não há recursos externos para limpar manualmente.
+
+> **Ordem recomendada para remoção completa:** 05 → 04 → 03 → 02 → 01 (o CloudFormation bloqueia a remoção de stacks enquanto existirem `!ImportValue` ativos apontando para eles).
