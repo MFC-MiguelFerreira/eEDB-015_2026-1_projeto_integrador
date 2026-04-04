@@ -1,0 +1,40 @@
+# Normalização de line endings para colaboração cross-platform
+# Referência: https://git-scm.com/docs/gitattributes
+
+# Padrão: Git normaliza para LF no repositório, converte ao checkout conforme o OS
+* text=auto
+
+# Shell scripts SEMPRE ficam com LF (falham com CRLF no Linux/Mac)
+*.sh text eol=lf
+
+# Python scripts: LF no repositório
+*.py text eol=lf
+
+# SQL scripts: LF no repositório
+*.sql text eol=lf
+
+# Arquivos de configuração: LF
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.env  text eol=lf
+*.cfg  text eol=lf
+*.toml text eol=lf
+*.ini  text eol=lf
+*.tf   text eol=lf
+
+# Markdown e texto: Git decide conforme o OS
+*.md   text
+*.txt  text
+
+# Notebooks Jupyter: tratar como texto (LF)
+*.ipynb text eol=lf
+
+# Binários: nunca converter
+*.parquet binary
+*.gz      binary
+*.zip     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.pdf     binary
