@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Stack 05 — Orquestração Step Functions: Landing Zone → Bronze.
+  Define a máquina de estados que executa em sequência:
+    1. Lambda de ingestão (Landing Zone)
+    2. Glue Job (Landing Zone → Bronze)
+  DEPENDÊNCIAS: stacks 02-lambda-ingestion e 04-glue-bronze devem estar implantados.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+  Group:
+    Type: String
+    Default: g05
+    AllowedPattern: "[a-z0-9]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- CloudWatch Log Group -------------------------------------------
+  # Retém logs de execução da máquina de estados por 7 dias.
+  # Criado antes da StateMachine para que o ARN esteja disponível na definição.
+  StateMachineLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws/states/${ProjectName}-${Group}-health-insurance-pipeline"
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # ---------- State Machine ---------------------------------------------------
+  # Orquestra a ingestão e o processamento inicial do dataset Health Insurance.
+  # Usa LabRole (obrigatório no AWS Academy — não é possível criar roles IAM).
+  HealthInsurancePipeline:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "${ProjectName}-${Group}-health-insurance-pipeline"
+      StateMachineType: STANDARD
+
+      # LabRole já possui permissões para: invocar Lambda, iniciar Glue Jobs
+      # e gravar logs no CloudWatch — suficiente para esta máquina de estados.
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+
+      # Logs apenas para erros — reduz custo de armazenamento no Learner Lab.
+      # IncludeExecutionData omitido intencionalmente: o resource handler do
+      # AWS::StepFunctions::StateMachine trata o booleano YAML como String e
+      # falha na validação do modelo. O default (false) é suficiente para
+      # diagnóstico de falhas via logs de erro.
+      LoggingConfiguration:
+        Level: ERROR
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StateMachineLogGroup.Arn
+
+      # Definição da máquina de estados em JSON (Amazon States Language).
+      # Fn::Sub com mapeamento substitui ${LambdaArn} e ${GlueJobName} pelos
+      # valores importados dos stacks 02 e 04 em tempo de deploy.
+      DefinitionString:
+        Fn::Sub:
+          - |
+            {
+              "Comment": "Pipeline Health Insurance Marketplace: Landing Zone → Bronze. Executa a Lambda de ingestão e, em caso de sucesso, o Glue Job de transformação.",
+              "StartAt": "InvokeLandingIngestion",
+              "States": {
+
+                "InvokeLandingIngestion": {
+                  "Type": "Task",
+                  "Comment": "Invoca a Lambda que baixa os CSVs do Kaggle e armazena na Landing Zone. A integração síncrona aguarda o retorno antes de avançar.",
+                  "Resource": "arn:aws:states:::lambda:invoke",
+                  "Parameters": {
+                    "FunctionName": "${LambdaArn}",
+                    "Payload.$": "$"
+                  },
+                  "ResultSelector": {
+                    "statusCode.$": "$.Payload.statusCode",
+                    "body.$":       "$.Payload.body"
+                  },
+                  "ResultPath": "$.ingestionResult",
+                  "TimeoutSeconds": 960,
+                  "Retry": [
+                    {
+                      "Comment": "Retenta falhas transientes do serviço Lambda (throttle, erros de rede).",
+                      "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                      ],
+                      "IntervalSeconds": 30,
+                      "MaxAttempts": 2,
+                      "BackoffRate": 2
+                    }
+                  ],
+                  "Catch": [
+                    {
+                      "Comment": "Qualquer exceção não tratada encaminha para o estado de falha.",
+                      "ErrorEquals": ["States.ALL"],
+                      "Next": "IngestionFailed",
+                      "ResultPath": "$.error"
+                    }
+                  ],
+                  "Next": "CheckIngestionResult"
+                },
+
+                "CheckIngestionResult": {
+                  "Type": "Choice",
+                  "Comment": "Verifica o statusCode retornado pela Lambda. 200=sucesso total, 207=sucesso parcial (ambos avançam). 500=falha total (encerra).",
+                  "Choices": [
+                    {
+                      "Variable": "$.ingestionResult.statusCode",
+                      "NumericEquals": 500,
+                      "Next": "IngestionFailed"
+                    }
+                  ],
+                  "Default": "StartLandingToBronze"
+                },
+
+                "StartLandingToBronze": {
+                  "Type": "Task",
+                  "Comment": "Inicia o Glue Job landing-to-bronze. A integração .sync:2 faz polling automático e só avança quando o job termina (sucesso ou falha). Sem retry: falhas devem ser investigadas antes de reprocessar.",
+                  "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                  "Parameters": {
+                    "JobName": "${GlueJobName}"
+                  },
+                  "ResultPath": "$.glueResult",
+                  "TimeoutSeconds": 7800,
+                  "Catch": [
+                    {
+                      "Comment": "Qualquer falha do job encaminha para o estado de falha.",
+                      "ErrorEquals": ["States.ALL"],
+                      "Next": "BronzeFailed",
+                      "ResultPath": "$.error"
+                    }
+                  ],
+                  "Next": "PipelineSucceeded"
+                },
+
+                "PipelineSucceeded": {
+                  "Type": "Succeed",
+                  "Comment": "Pipeline concluído: dados disponíveis na camada Bronze."
+                },
+
+                "IngestionFailed": {
+                  "Type": "Fail",
+                  "Error": "IngestionError",
+                  "Cause": "A Lambda de ingestão retornou statusCode 500 ou lançou uma exceção não tratada."
+                },
+
+                "BronzeFailed": {
+                  "Type": "Fail",
+                  "Error": "BronzeJobError",
+                  "Cause": "O Glue Job landing-to-bronze terminou com falha."
+                }
+
+              }
+            }
+          - LambdaArn:   !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-landing-ingestion-function-arn"
+            GlueJobName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-landing-to-bronze-job-name"
+
+      # AWS::StepFunctions::StateMachine exige Tags no formato de lista (JSONArray),
+      # diferente de outros recursos que aceitam o formato de mapa (JSONObject).
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para referência futura (ex: triggers, monitoramento)
+# ---------------------------------------------------------------------------
+Outputs:
+  StateMachineName:
+    Description: Nome da máquina de estados do pipeline Health Insurance
+    Value: !GetAtt HealthInsurancePipeline.Name
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-pipeline-state-machine-name"
+
+  StateMachineArn:
+    Description: ARN da máquina de estados do pipeline Health Insurance
+    Value: !Ref HealthInsurancePipeline
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-pipeline-state-machine-arn"
