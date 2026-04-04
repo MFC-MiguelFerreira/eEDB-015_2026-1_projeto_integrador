@@ -17,7 +17,8 @@ infrastructure/
 │   ├── deploy.sh                 # Cria ou atualiza os stacks 01, 03, ...
 │   ├── destroy.sh                # Remove os stacks 01, 03, ... (com confirmação)
 │   ├── deploy_lambda.sh          # Empacota e implanta a Lambda de ingestão (Stack 02)
-│   └── destroy_lambda.sh         # Remove a Lambda de ingestão e o pacote ZIP do S3
+│   ├── destroy_lambda.sh         # Remove a Lambda de ingestão e o pacote ZIP do S3
+│   └── deploy_glue_jobs.sh       # Faz upload dos scripts Glue para S3 e implanta o Stack 04
 ├── .env.example                  # Modelo de credenciais (versionado)
 └── .env                          # Credenciais reais — NÃO commitado (.gitignore)
 ```
@@ -43,7 +44,7 @@ O `.env` está no `.gitignore` e **nunca será commitado**. O `.env.example` é 
 
 | #   | Stack                    | Descrição                                                                                        | Script de deploy              |
 | --- | ------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------- |
-| 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena                                    | `deploy.sh 01-storage`        |
+| 01  | `01-storage`             | Buckets S3 das camadas Landing, Bronze, Silver, Gold + Athena Results                            | `deploy.sh 01-storage`        |
 | 02  | `02-lambda-ingestion`    | Função Lambda que baixa os CSVs do Kaggle e salva na Landing Zone + CloudWatch Log Group         | `deploy_lambda.sh`            |
 | 03  | `03-glue-catalog`        | Glue Databases (Bronze, Silver, Gold) + Athena Workgroup apontando para os buckets do Stack 01   | `deploy.sh 03-glue-catalog`   |
 | 04  | `04-glue-bronze`         | Glue Job 5.0 (Landing → Bronze): CSV → tabelas Iceberg/Snappy particionadas por year             | `deploy_glue_jobs.sh`         |
@@ -193,7 +194,7 @@ aws glue start-job-run \
 ./infrastructure/scripts/destroy.sh 01-storage
 ```
 
-> **Atenção:** os buckets de dados (Landing, Bronze, Silver, Gold) têm `DeletionPolicy: Retain` e **não são deletados** junto com o stack — isso protege os dados de uma remoção acidental. Para deletar os buckets, esvazie-os manualmente no console S3 antes.
+> **Atenção:** todos os buckets (Landing, Bronze, Silver, Gold, Athena Results) têm `DeletionPolicy: Delete` e **serão deletados** junto com o stack. Os buckets precisam estar **vazios** para que o CloudFormation consiga removê-los — esvazie-os manualmente no console S3 antes de executar o destroy.
 
 ### Stack 02 — Lambda de Ingestão
 

@@ -33,3 +33,27 @@ Qual é a relação entre a amplitude da rede de prestadores (Network Size) de u
 
 **5. Monopólios e desigualdade geográfica** *(objetivo extra)*
 A ausência de concorrência entre seguradoras em determinadas Áreas de Serviço cria um efeito de monopólio que infla artificialmente os prêmios dos planos básicos, em comparação com mercados altamente competitivos em grandes centros urbanos?
+
+## Estrutura do Repositório
+
+```
+.
+├── infrastructure/   # IaC (CloudFormation) e scripts de deploy na AWS
+├── src/              # Scripts de produção (Glue Jobs e Lambdas)
+├── scripts/          # Notebooks de desenvolvimento e teste local
+└── .devcontainer/    # Ambiente local que replica o runtime do AWS Glue
+```
+
+### Por onde começar
+
+**1. Infraestrutura AWS** — [`infrastructure/`](infrastructure/README.md)
+Provisionamento dos recursos AWS (S3, Glue, Lambda, Athena) via CloudFormation. Contém os scripts de deploy e as instruções para configurar as credenciais efêmeras do AWS Academy Learner Lab.
+
+**2. Ambiente de desenvolvimento local** — [`.devcontainer/`](.devcontainer/README.md)
+Container Docker que replica o runtime do AWS Glue 5 localmente (PySpark + `awsglue` + Iceberg). Use-o para desenvolver e testar os scripts sem consumir créditos AWS. Inclui instruções para abrir o ambiente no VS Code e atualizar as credenciais entre sessões.
+
+**3. Desenvolvimento de scripts ETL** — [`scripts/`](scripts/README.md)
+Notebooks Jupyter para prototipação dos Glue Jobs. Todo script novo deve ser desenvolvido aqui primeiro — dentro do Dev Container — e só transportado para `src/` após validado.
+
+**4. Scripts de produção** — [`src/`](src/README.md)
+Versões finais dos Glue Jobs (`.py`) e Lambdas prontos para deploy na AWS. Não edite diretamente sem antes validar a lógica no notebook correspondente em `scripts/`.
