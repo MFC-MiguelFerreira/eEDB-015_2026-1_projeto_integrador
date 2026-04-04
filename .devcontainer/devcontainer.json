@@ -1,0 +1,42 @@
+{
+  "name": "AWS Glue Dev",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "runArgs": [
+    "--name", "eedb015_g05_aws_glue_pyspark_environment"
+  ],
+  "remoteUser": "hadoop",
+  "containerUser": "hadoop",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/hadoop/workspace,type=bind",
+  "workspaceFolder": "/home/hadoop/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder}/infrastructure/.env,target=/home/hadoop/.env,readonly,type=bind"
+  ],
+  "postCreateCommand": "bash /home/hadoop/workspace/.devcontainer/setup-aws-credentials.sh",
+  "containerEnv": {
+    "DISABLE_SSL": "true",
+    "AWS_PROFILE": "default"
+  },
+  "forwardPorts": [4040, 18080],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.isort",
+        "ms-toolsai.jupyter",
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "python.linting.enabled": true,
+        "isort.importStrategy": "fromEnvironment",
+        "python.terminal.activateEnvironment": false,
+        "python.defaultInterpreterPath": "/opt/conda/bin/python",
+        "python.analysis.extraPaths": [
+          "/home/hadoop/aws-glue-libs/PyGlue.zip",
+          "/home/hadoop/spark/python/lib/py4j-0.10.9-src.zip",
+          "/home/hadoop/spark/python/"
+        ]
+      }
+    }
+  }
+}
