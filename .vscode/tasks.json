@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Refresh AWS Credentials",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/.devcontainer/setup-aws-credentials.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

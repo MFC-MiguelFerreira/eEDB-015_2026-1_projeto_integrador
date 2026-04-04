@@ -67,10 +67,9 @@ Resources:
         "--enable-continuous-cloudwatch-log": "true"
         "--enable-metrics": "true"
         # Parâmetros do script — importados dos stacks anteriores
-        "--LANDING_BUCKET": !ImportValue
+        "--PIPELINE_NAME": "health_insurance"
+        "--LANDING_ZONE_BUCKET": !ImportValue
           Fn::Sub: "${ProjectName}-${Group}-landing-bucket-name"
-        "--BRONZE_BUCKET": !ImportValue
-          Fn::Sub: "${ProjectName}-${Group}-bronze-bucket-name"
         "--BRONZE_DATABASE": !ImportValue
           Fn::Sub: "${ProjectName}-${Group}-bronze-database-name"
       Tags:
