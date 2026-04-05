@@ -19,6 +19,7 @@ Cada notebook corresponde a um Glue Job. Uma vez que a lógica está validada no
 | Notebook | Glue Job correspondente | Descrição |
 |---|---|---|
 | `landing_to_bronze.ipynb` | `src/glue_jobs/landing_to_bronze.py` | Ingere CSVs da Landing Zone e grava tabelas Iceberg na camada Bronze |
+| `bronze_exploration.ipynb` | *(exploração — sem job correspondente)* | Lista todas as tabelas do database Bronze e exibe as 10 primeiras linhas de cada uma via Amazon Athena |
 
 ## Como executar
 
