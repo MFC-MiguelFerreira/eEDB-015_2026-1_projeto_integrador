@@ -1,10 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Stack 05 — Orquestração Step Functions: Landing Zone → Bronze.
+  Stack 06 — Orquestração Step Functions: Landing Zone → Bronze → Silver.
   Define a máquina de estados que executa em sequência:
     1. Lambda de ingestão (Landing Zone)
     2. Glue Job (Landing Zone → Bronze)
-  DEPENDÊNCIAS: stacks 02-lambda-ingestion e 04-glue-bronze devem estar implantados.
+    3. Glue Job (Bronze → Silver)
+  DEPENDÊNCIAS: stacks 02-lambda-ingestion, 04-glue-bronze e 05-glue-silver devem estar implantados.
 
 # ---------------------------------------------------------------------------
 # Parâmetros
@@ -70,13 +71,12 @@ Resources:
               LogGroupArn: !GetAtt StateMachineLogGroup.Arn
 
       # Definição da máquina de estados em JSON (Amazon States Language).
-      # Fn::Sub com mapeamento substitui ${LambdaArn} e ${GlueJobName} pelos
-      # valores importados dos stacks 02 e 04 em tempo de deploy.
+      # Fn::Sub com mapeamento substitui ARNs/nomes importados em tempo de deploy.
       DefinitionString:
         Fn::Sub:
           - |
             {
-              "Comment": "Pipeline Health Insurance Marketplace: Landing Zone → Bronze. Executa a Lambda de ingestão e, em caso de sucesso, o Glue Job de transformação.",
+              "Comment": "Pipeline Health Insurance Marketplace: Landing Zone → Bronze → Silver. Executa a Lambda de ingestão e, em caso de sucesso, os Glue Jobs de transformação.",
               "StartAt": "InvokeLandingIngestion",
               "States": {
 
@@ -137,7 +137,7 @@ Resources:
                   "Comment": "Inicia o Glue Job landing-to-bronze. A integração .sync:2 faz polling automático e só avança quando o job termina (sucesso ou falha). Sem retry: falhas devem ser investigadas antes de reprocessar.",
                   "Resource": "arn:aws:states:::glue:startJobRun.sync",
                   "Parameters": {
-                    "JobName": "${GlueJobName}"
+                    "JobName": "${LandingToBronzeGlueJobName}"
                   },
                   "ResultPath": "$.glueResult",
                   "TimeoutSeconds": 7800,
@@ -149,12 +149,32 @@ Resources:
                       "ResultPath": "$.error"
                     }
                   ],
+                  "Next": "StartBronzeToSilver"
+                },
+
+                "StartBronzeToSilver": {
+                  "Type": "Task",
+                  "Comment": "Inicia o Glue Job bronze-to-silver. A execução síncrona aguarda a conclusão do processamento antes de finalizar o pipeline.",
+                  "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                  "Parameters": {
+                    "JobName": "${BronzeToSilverGlueJobName}"
+                  },
+                  "ResultPath": "$.silverResult",
+                  "TimeoutSeconds": 7800,
+                  "Catch": [
+                    {
+                      "Comment": "Qualquer falha do job encaminha para o estado de falha da Silver.",
+                      "ErrorEquals": ["States.ALL"],
+                      "Next": "SilverFailed",
+                      "ResultPath": "$.error"
+                    }
+                  ],
                   "Next": "PipelineSucceeded"
                 },
 
                 "PipelineSucceeded": {
                   "Type": "Succeed",
-                  "Comment": "Pipeline concluído: dados disponíveis na camada Bronze."
+                  "Comment": "Pipeline concluído: dados disponíveis nas camadas Bronze e Silver."
                 },
 
                 "IngestionFailed": {
@@ -167,14 +187,22 @@ Resources:
                   "Type": "Fail",
                   "Error": "BronzeJobError",
                   "Cause": "O Glue Job landing-to-bronze terminou com falha."
+                },
+
+                "SilverFailed": {
+                  "Type": "Fail",
+                  "Error": "SilverJobError",
+                  "Cause": "O Glue Job bronze-to-silver terminou com falha."
                 }
 
               }
             }
           - LambdaArn:   !ImportValue
               Fn::Sub: "${ProjectName}-${Group}-landing-ingestion-function-arn"
-            GlueJobName: !ImportValue
+            LandingToBronzeGlueJobName: !ImportValue
               Fn::Sub: "${ProjectName}-${Group}-landing-to-bronze-job-name"
+            BronzeToSilverGlueJobName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-bronze-to-silver-job-name"
 
       # AWS::StepFunctions::StateMachine exige Tags no formato de lista (JSONArray),
       # diferente de outros recursos que aceitam o formato de mapa (JSONObject).

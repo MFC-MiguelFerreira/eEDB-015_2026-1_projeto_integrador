@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Stack 04 — Glue Job Landing Zone → Bronze — eEDB-015.
-  Provisiona o job de ingestão Landing Zone → Bronze usando AWS Glue 5.0.
-  DEPENDÊNCIAS: stacks 01-storage e 03-glue-catalog devem estar implantados.
+  Stack 05 — Glue Job Bronze → Silver — eEDB-015.
+  Provisiona o job de transformação Bronze → Silver usando AWS Glue 5.0.
+  DEPENDÊNCIAS: stacks 01-storage, 03-glue-catalog e 04-glue-bronze devem estar implantados.
 
 # ---------------------------------------------------------------------------
 # Parâmetros
@@ -31,16 +31,16 @@ Parameters:
 # ---------------------------------------------------------------------------
 Resources:
 
-  # ---------- Glue Job: Landing → Bronze -------------------------------------
-  # Lê CSVs da Landing Zone → escreve tabelas Iceberg no database Bronze.
+  # ---------- Glue Job: Bronze → Silver --------------------------------------
+  # Lê tabelas Iceberg da Bronze → aplica tipagem/limpeza → recria na Silver.
   # Usa LabRole (obrigatório no AWS Academy — não é possível criar roles).
-  GlueJobLandingToBronze:
+  GlueJobBronzeToSilver:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${ProjectName}-landing-to-bronze"
+      Name: !Sub "${ProjectName}-bronze-to-silver"
       Description: >
-        Ingestão Landing Zone → Bronze: CSV → Iceberg (Parquet/Snappy).
-        Uma tabela por tipo de arquivo, particionada por year, sem alteração dos dados.
+        Transformação Bronze → Silver: Iceberg → Iceberg com tipagem,
+        limpeza e regras de negócio iniciais.
       Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
       GlueVersion: "5.0"
       WorkerType: G.1X
@@ -50,7 +50,7 @@ Resources:
       Command:
         Name: glueetl
         PythonVersion: "3"
-        ScriptLocation: !Sub "s3://${GlueJobScriptsBucket}/glue-scripts/landing_to_bronze.py"
+        ScriptLocation: !Sub "s3://${GlueJobScriptsBucket}/glue-scripts/bronze_to_silver.py"
       DefaultArguments:
         "--job-language": "python"
         "--job-bookmark-option": "job-bookmark-disable"
@@ -59,23 +59,23 @@ Resources:
         "--enable-continuous-cloudwatch-log": "true"
         "--enable-metrics": "true"
         "--PIPELINE_NAME": "health_insurance"
-        "--LANDING_ZONE_BUCKET": !ImportValue
-          Fn::Sub: "${ProjectName}-${Group}-landing-bucket-name"
         "--BRONZE_DATABASE": !ImportValue
           Fn::Sub: "${ProjectName}-${Group}-bronze-database-name"
+        "--SILVER_DATABASE": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-silver-database-name"
       Tags:
         Project: !Ref ProjectName
         Group: !Ref Group
         ManagedBy: CloudFormation
 
   # ---------- CloudWatch Log Group -------------------------------------------
-  # Retém logs do job Landing → Bronze por 7 dias para economizar crédito.
-  GlueJobLogGroup:
+  # Retém logs do job Bronze → Silver por 7 dias para economizar crédito.
+  GlueJobBronzeToSilverLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      LogGroupName: !Sub "/aws-glue/jobs/${ProjectName}-landing-to-bronze"
+      LogGroupName: !Sub "/aws-glue/jobs/${ProjectName}-bronze-to-silver"
       RetentionInDays: 7
       Tags:
         - Key: Project
@@ -86,11 +86,11 @@ Resources:
           Value: CloudFormation
 
 # ---------------------------------------------------------------------------
-# Outputs — exportados para stacks de orquestração (Step Functions)
+# Outputs — exportados para stack de orquestração (Step Functions)
 # ---------------------------------------------------------------------------
 Outputs:
-  LandingToBronzeGlueJobName:
-    Description: Nome do Glue Job Landing Zone → Bronze
-    Value: !Ref GlueJobLandingToBronze
+  BronzeToSilverGlueJobName:
+    Description: Nome do Glue Job Bronze → Silver
+    Value: !Ref GlueJobBronzeToSilver
     Export:
-      Name: !Sub "${ProjectName}-${Group}-landing-to-bronze-job-name"
+      Name: !Sub "${ProjectName}-${Group}-bronze-to-silver-job-name"

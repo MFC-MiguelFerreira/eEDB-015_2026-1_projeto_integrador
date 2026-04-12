@@ -7,6 +7,7 @@ Esta pasta contém os scripts finais prontos para deploy na AWS. Todo código aq
 ```
 src/
 ├── glue_jobs/               # Scripts PySpark deployados no AWS Glue
+│   ├── bronze_to_silver.py
 │   └── landing_to_bronze.py
 └── lambdas/                 # Funções Lambda deployadas via deploy_lambda.sh
     └── landing_zone_ingestion/
@@ -20,7 +21,8 @@ Scripts PySpark executados pelo **AWS Glue** (Spark gerenciado). Cada arquivo co
 
 | Script | Glue Job | Stack CloudFormation |
 |---|---|---|
-| `landing_to_bronze.py` | `eedb015-landing-to-bronze` | `04-glue-bronze` |
+| `landing_to_bronze.py` | `eedb015-landing-to-bronze` | `04-glue-etl` |
+| `bronze_to_silver.py` | `eedb015-bronze-to-silver` | `04-glue-etl` |
 
 O deploy é feito pelo script `infrastructure/scripts/deploy_glue_jobs.sh`, que faz upload dos `.py` para o bucket Landing Zone e atualiza o stack CloudFormation correspondente.
 
