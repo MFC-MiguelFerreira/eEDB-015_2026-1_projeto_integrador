@@ -285,7 +285,7 @@ for table_name in all_table_names:
 
 	try:
 		df = spark.table(bronze_table)
-		logger.info("  Lida: %d coluna(s), %d linha(s) estimadas.", len(df.columns), df.count())
+		logger.info("  Lida: %d coluna(s).", len(df.columns))
 
 		df_transformed = apply_transformations(table_name, df)
 		logger.info("  Transformada: %d coluna(s).", len(df_transformed.columns))
