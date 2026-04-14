@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy_step_functions.sh — Implanta o stack 05 (Step Functions)
+# deploy_step_functions.sh — Implanta o stack 06 (Step Functions)
 #
 # Uso:
 #   ./infrastructure/scripts/deploy_step_functions.sh [parametros]
@@ -12,13 +12,15 @@
 # Pré-requisitos:
 #   1. Stack 02 (02-lambda-ingestion) implantado via deploy_lambda.sh
 #   2. Stack 04 (04-glue-bronze) implantado via deploy_glue_jobs.sh
-#   3. Credenciais AWS configuradas em infrastructure/.env
+#   3. Stack 05 (05-glue-silver) implantado via deploy_glue_jobs.sh
+#   4. Credenciais AWS configuradas em infrastructure/.env
 #
 # O que este script faz:
 #   1. Carrega credenciais do .env
-#   2. Implanta (ou atualiza) o Stack 05 via CloudFormation
+#   2. Implanta (ou atualiza) o Stack 06 via CloudFormation
 #      — A definição da máquina de estados está embutida no template YAML
-#        e é resolvida pelo CloudFormation via !ImportValue dos stacks 02 e 04.
+#        e é resolvida pelo CloudFormation via !ImportValue dos stacks 02, 04 e 05.
+#      — O pipeline executa Landing Zone → Bronze → Silver.
 # =============================================================================
 
 set -euo pipefail
@@ -41,8 +43,8 @@ fi
 REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 PARAMS_ENV="${1:-dev}"
 
-STACK_05_NAME="eEDB015-05-step-functions"
-TEMPLATE="$SCRIPT_DIR/../cloudformation/stacks/05-step-functions.yaml"
+STACK_06_NAME="eEDB015-06-step-functions"
+TEMPLATE="$SCRIPT_DIR/../cloudformation/stacks/06-step-functions.yaml"
 PARAMS_FILE="$SCRIPT_DIR/../cloudformation/parameters/${PARAMS_ENV}.json"
 
 # ---------------------------------------------------------------------------
@@ -59,7 +61,7 @@ if [[ ! -f "$PARAMS_FILE" ]]; then
 fi
 
 # Verifica se os stacks dependentes existem antes de tentar o deploy
-for DEPENDENCY in "eEDB015-02-lambda-ingestion" "eEDB015-04-glue-bronze"; do
+for DEPENDENCY in "eEDB015-02-lambda-ingestion" "eEDB015-04-glue-bronze" "eEDB015-05-glue-silver"; do
   STATUS=$(aws cloudformation describe-stacks \
     --region "$REGION" \
     --stack-name "$DEPENDENCY" \
@@ -79,7 +81,7 @@ done
 # Implantar (ou atualizar) o Stack 05
 # ---------------------------------------------------------------------------
 echo "===================================================================="
-echo " Stack   : $STACK_05_NAME"
+echo " Stack   : $STACK_06_NAME"
 echo " Template: $TEMPLATE"
 echo " Params  : $PARAMS_FILE"
 echo " Região  : $REGION"
@@ -94,32 +96,32 @@ done < <(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' "$PARAMS_FILE")
 aws cloudformation deploy \
   --region "$REGION" \
   --template-file "$TEMPLATE" \
-  --stack-name "$STACK_05_NAME" \
+  --stack-name "$STACK_06_NAME" \
   --parameter-overrides "${PARAMS[@]}" \
   --capabilities CAPABILITY_IAM \
   --no-fail-on-empty-changeset
 
 echo ""
-echo "Stack '$STACK_05_NAME' implantado com sucesso."
+echo "Stack '$STACK_06_NAME' implantado com sucesso."
 echo ""
 
 # Exibe os Outputs do stack
 echo "---- Outputs -------------------------------------------------------"
 aws cloudformation describe-stacks \
   --region "$REGION" \
-  --stack-name "$STACK_05_NAME" \
+  --stack-name "$STACK_06_NAME" \
   --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
   --output table
 
 # Exibe o ARN da máquina de estados para execução rápida
 STATE_MACHINE_ARN=$(aws cloudformation describe-stacks \
   --region "$REGION" \
-  --stack-name "$STACK_05_NAME" \
+  --stack-name "$STACK_06_NAME" \
   --query "Stacks[0].Outputs[?OutputKey=='StateMachineArn'].OutputValue" \
   --output text)
 
 echo ""
-echo "Para iniciar uma execução do pipeline:"
+echo "Para iniciar uma execução do pipeline completo (Landing → Bronze → Silver):"
 echo ""
 echo "  aws stepfunctions start-execution \\"
 echo "    --state-machine-arn $STATE_MACHINE_ARN \\"

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy_glue_jobs.sh — Faz upload dos scripts Glue para S3 e implanta o
-#                        stack 04 (Glue Job Landing → Bronze)
+# deploy_glue_jobs.sh — Faz upload dos scripts Glue para S3 e implanta os
+#                        stacks 04 (Glue Job Landing → Bronze) e
+#                        05 (Glue Job Bronze → Silver)
 #
 # Uso:
 #   ./infrastructure/scripts/deploy_glue_jobs.sh [parametros]
@@ -20,7 +21,8 @@
 #   2. Obtém o nome do bucket Landing Zone nos Outputs do Stack 01
 #   3. Faz upload de todos os scripts em src/glue_jobs/ para
 #      s3://{landing-bucket}/glue-scripts/
-#   4. Implanta (ou atualiza) o Stack 04 via CloudFormation
+#   4. Implanta (ou atualiza) o Stack 04 via CloudFormation (Landing → Bronze)
+#   5. Implanta (ou atualiza) o Stack 05 via CloudFormation (Bronze → Silver)
 # =============================================================================
 
 set -euo pipefail
@@ -46,7 +48,9 @@ PARAMS_ENV="${1:-dev}"
 
 STACK_01_NAME="eEDB015-01-storage"
 STACK_04_NAME="eEDB015-04-glue-bronze"
-TEMPLATE="$SCRIPT_DIR/../cloudformation/stacks/04-glue-bronze.yaml"
+STACK_05_NAME="eEDB015-05-glue-silver"
+TEMPLATE_04="$SCRIPT_DIR/../cloudformation/stacks/04-glue-bronze.yaml"
+TEMPLATE_05="$SCRIPT_DIR/../cloudformation/stacks/05-glue-silver.yaml"
 PARAMS_FILE="$SCRIPT_DIR/../cloudformation/parameters/${PARAMS_ENV}.json"
 GLUE_SCRIPTS_DIR="$PROJECT_ROOT/src/glue_jobs"
 S3_SCRIPTS_PREFIX="glue-scripts"
@@ -54,8 +58,13 @@ S3_SCRIPTS_PREFIX="glue-scripts"
 # ---------------------------------------------------------------------------
 # Validações
 # ---------------------------------------------------------------------------
-if [[ ! -f "$TEMPLATE" ]]; then
-  echo "Erro: template não encontrado em $TEMPLATE"
+if [[ ! -f "$TEMPLATE_04" ]]; then
+  echo "Erro: template não encontrado em $TEMPLATE_04"
+  exit 1
+fi
+
+if [[ ! -f "$TEMPLATE_05" ]]; then
+  echo "Erro: template não encontrado em $TEMPLATE_05"
   exit 1
 fi
 
@@ -116,12 +125,12 @@ fi
 echo "$SCRIPTS_FOUND script(s) enviado(s)."
 
 # ---------------------------------------------------------------------------
-# Passo 3: Implantar (ou atualizar) o Stack 04
+# Passo 3: Implantar (ou atualizar) o Stack 04 (Landing → Bronze)
 # ---------------------------------------------------------------------------
 echo ""
 echo "===================================================================="
 echo " Stack   : $STACK_04_NAME"
-echo " Template: $TEMPLATE"
+echo " Template: $TEMPLATE_04"
 echo " Params  : $PARAMS_FILE + GlueJobScriptsBucket"
 echo " Região  : $REGION"
 echo "===================================================================="
@@ -136,7 +145,7 @@ PARAMS+=("GlueJobScriptsBucket=$LANDING_BUCKET")
 
 aws cloudformation deploy \
   --region "$REGION" \
-  --template-file "$TEMPLATE" \
+  --template-file "$TEMPLATE_04" \
   --stack-name "$STACK_04_NAME" \
   --parameter-overrides "${PARAMS[@]}" \
   --capabilities CAPABILITY_IAM \
@@ -146,10 +155,47 @@ echo ""
 echo "Stack '$STACK_04_NAME' implantado com sucesso."
 echo ""
 
-# Exibe os Outputs do stack
-echo "---- Outputs -------------------------------------------------------"
+# Exibe os Outputs do stack 04
+echo "---- Outputs Stack 04 ----------------------------------------------"
 aws cloudformation describe-stacks \
   --region "$REGION" \
   --stack-name "$STACK_04_NAME" \
+  --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+  --output table
+
+# ---------------------------------------------------------------------------
+# Passo 4: Implantar (ou atualizar) o Stack 05 (Bronze → Silver)
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Stack   : $STACK_05_NAME"
+echo " Template: $TEMPLATE_05"
+echo " Params  : $PARAMS_FILE + GlueJobScriptsBucket"
+echo " Região  : $REGION"
+echo "===================================================================="
+
+PARAMS=()
+while IFS= read -r param; do
+  PARAMS+=("$param")
+done < <(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' "$PARAMS_FILE")
+PARAMS+=("GlueJobScriptsBucket=$LANDING_BUCKET")
+
+aws cloudformation deploy \
+  --region "$REGION" \
+  --template-file "$TEMPLATE_05" \
+  --stack-name "$STACK_05_NAME" \
+  --parameter-overrides "${PARAMS[@]}" \
+  --capabilities CAPABILITY_IAM \
+  --no-fail-on-empty-changeset
+
+echo ""
+echo "Stack '$STACK_05_NAME' implantado com sucesso."
+echo ""
+
+# Exibe os Outputs do stack 05
+echo "---- Outputs Stack 05 ----------------------------------------------"
+aws cloudformation describe-stacks \
+  --region "$REGION" \
+  --stack-name "$STACK_05_NAME" \
   --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
   --output table
