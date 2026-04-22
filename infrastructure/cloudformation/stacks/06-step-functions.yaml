@@ -1,11 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Stack 06 — Orquestração Step Functions: Landing Zone → Bronze → Silver.
+  Stack 06 — Orquestração Step Functions: Landing Zone → Bronze → Silver → Gold.
   Define a máquina de estados que executa em sequência:
     1. Lambda de ingestão (Landing Zone)
     2. Glue Job (Landing Zone → Bronze)
     3. Glue Job (Bronze → Silver)
-  DEPENDÊNCIAS: stacks 02-lambda-ingestion, 04-glue-bronze e 05-glue-silver devem estar implantados.
+    4. Glue Job (Silver → Gold): DELETE + INSERT nas tabelas Iceberg via Athena
+  DEPENDÊNCIAS: stacks 02-lambda-ingestion, 04-glue-bronze, 05-glue-silver e
+                07-glue-gold devem estar implantados.
 
 # ---------------------------------------------------------------------------
 # Parâmetros
@@ -76,7 +78,7 @@ Resources:
         Fn::Sub:
           - |
             {
-              "Comment": "Pipeline Health Insurance Marketplace: Landing Zone → Bronze → Silver. Executa a Lambda de ingestão e, em caso de sucesso, os Glue Jobs de transformação.",
+              "Comment": "Pipeline Health Insurance Marketplace: Landing Zone → Bronze → Silver → Gold. Executa a Lambda de ingestão e, em caso de sucesso, os Glue Jobs de transformação.",
               "StartAt": "InvokeLandingIngestion",
               "States": {
 
@@ -154,7 +156,7 @@ Resources:
 
                 "StartBronzeToSilver": {
                   "Type": "Task",
-                  "Comment": "Inicia o Glue Job bronze-to-silver. A execução síncrona aguarda a conclusão do processamento antes de finalizar o pipeline.",
+                  "Comment": "Inicia o Glue Job bronze-to-silver. A execução síncrona aguarda a conclusão do processamento antes de avançar para a Gold.",
                   "Resource": "arn:aws:states:::glue:startJobRun.sync",
                   "Parameters": {
                     "JobName": "${BronzeToSilverGlueJobName}"
@@ -169,12 +171,32 @@ Resources:
                       "ResultPath": "$.error"
                     }
                   ],
+                  "Next": "StartSilverToGold"
+                },
+
+                "StartSilverToGold": {
+                  "Type": "Task",
+                  "Comment": "Inicia o Glue Job silver-to-gold (Python Shell). O job executa DELETE + INSERT em cada tabela Iceberg da Gold via Athena, lendo os SQLs do S3.",
+                  "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                  "Parameters": {
+                    "JobName": "${SilverToGoldGlueJobName}"
+                  },
+                  "ResultPath": "$.goldResult",
+                  "TimeoutSeconds": 4200,
+                  "Catch": [
+                    {
+                      "Comment": "Qualquer falha do job encaminha para o estado de falha da Gold.",
+                      "ErrorEquals": ["States.ALL"],
+                      "Next": "GoldFailed",
+                      "ResultPath": "$.error"
+                    }
+                  ],
                   "Next": "PipelineSucceeded"
                 },
 
                 "PipelineSucceeded": {
                   "Type": "Succeed",
-                  "Comment": "Pipeline concluído: dados disponíveis nas camadas Bronze e Silver."
+                  "Comment": "Pipeline concluído: dados disponíveis nas camadas Bronze, Silver e Gold."
                 },
 
                 "IngestionFailed": {
@@ -193,6 +215,12 @@ Resources:
                   "Type": "Fail",
                   "Error": "SilverJobError",
                   "Cause": "O Glue Job bronze-to-silver terminou com falha."
+                },
+
+                "GoldFailed": {
+                  "Type": "Fail",
+                  "Error": "GoldJobError",
+                  "Cause": "O Glue Job silver-to-gold terminou com falha. Verifique os logs do Athena para identificar qual tabela causou o erro."
                 }
 
               }
@@ -203,6 +231,8 @@ Resources:
               Fn::Sub: "${ProjectName}-${Group}-landing-to-bronze-job-name"
             BronzeToSilverGlueJobName: !ImportValue
               Fn::Sub: "${ProjectName}-${Group}-bronze-to-silver-job-name"
+            SilverToGoldGlueJobName: !ImportValue
+              Fn::Sub: "${ProjectName}-${Group}-silver-to-gold-job-name"
 
       # AWS::StepFunctions::StateMachine exige Tags no formato de lista (JSONArray),
       # diferente de outros recursos que aceitam o formato de mapa (JSONObject).

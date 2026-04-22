@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Stack 07 — Glue Job Silver → Gold — eEDB-015.
+  Provisiona o job Python Shell que popula a camada Gold executando
+  DELETE + INSERT nas tabelas Iceberg via Athena. Os SQLs de inserção
+  são lidos do S3 em tempo de execução (src/.sql/insert/).
+  DEPENDÊNCIAS: stacks 01-storage, 03-glue-catalog e 05-glue-silver devem estar implantados.
+
+# ---------------------------------------------------------------------------
+# Parâmetros
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: eedb015
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+  Group:
+    Type: String
+    Default: g05
+    AllowedPattern: "[a-z0-9]+"
+    Description: Mesmo valor usado nos stacks anteriores.
+
+  GlueJobScriptsBucket:
+    Type: String
+    Description: >
+      Nome do bucket S3 onde os scripts Glue e SQLs foram carregados
+      pelo deploy_glue_jobs.sh (tipicamente o bucket Landing Zone).
+
+# ---------------------------------------------------------------------------
+# Recursos
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---------- Glue Job: Silver → Gold ----------------------------------------
+  # Job Python Shell (sem Spark): usa boto3 para executar as queries Athena.
+  # DELETE FROM Iceberg (limpa tabela) seguido de INSERT SELECT da Silver.
+  # Usa LabRole (obrigatório no AWS Academy — não é possível criar roles IAM).
+  GlueJobSilverToGold:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-silver-to-gold"
+      Description: >
+        Popula a camada Gold executando DELETE + INSERT nas tabelas Iceberg
+        via Athena. Os SQLs de inserção são lidos do S3 em tempo de execução.
+      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+      GlueVersion: "3.0"
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${GlueJobScriptsBucket}/glue-scripts/silver_to_gold.py"
+      # 1/16 DPU — suficiente para chamadas Athena via boto3 (sem processamento Spark).
+      MaxCapacity: 0.0625
+      # Timeout em minutos: 9 tabelas × ~5 min por Athena query = margem confortável.
+      Timeout: 60
+      MaxRetries: 0
+      DefaultArguments:
+        "--job-language": "python"
+        "--enable-continuous-cloudwatch-log": "true"
+        "--SQL_BUCKET": !Ref GlueJobScriptsBucket
+        "--SQL_PREFIX": "glue-scripts/sql/gold"
+        "--ATHENA_OUTPUT_BUCKET": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-athena-results-bucket-name"
+        "--GOLD_DATABASE": !ImportValue
+          Fn::Sub: "${ProjectName}-${Group}-gold-database-name"
+      Tags:
+        Project: !Ref ProjectName
+        Group: !Ref Group
+        ManagedBy: CloudFormation
+
+  # ---------- CloudWatch Log Group -------------------------------------------
+  # Retém logs do job Silver → Gold por 7 dias para economizar crédito.
+  GlueJobSilverToGoldLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws-glue/jobs/${ProjectName}-silver-to-gold"
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Group
+          Value: !Ref Group
+        - Key: ManagedBy
+          Value: CloudFormation
+
+# ---------------------------------------------------------------------------
+# Outputs — exportados para stack de orquestração (Step Functions)
+# ---------------------------------------------------------------------------
+Outputs:
+  SilverToGoldGlueJobName:
+    Description: Nome do Glue Job Silver → Gold
+    Value: !Ref GlueJobSilverToGold
+    Export:
+      Name: !Sub "${ProjectName}-${Group}-silver-to-gold-job-name"

@@ -13,14 +13,15 @@
 #   1. Stack 02 (02-lambda-ingestion) implantado via deploy_lambda.sh
 #   2. Stack 04 (04-glue-bronze) implantado via deploy_glue_jobs.sh
 #   3. Stack 05 (05-glue-silver) implantado via deploy_glue_jobs.sh
-#   4. Credenciais AWS configuradas em infrastructure/.env
+#   4. Stack 07 (07-glue-gold) implantado via deploy_glue_jobs.sh
+#   5. Credenciais AWS configuradas em infrastructure/.env
 #
 # O que este script faz:
 #   1. Carrega credenciais do .env
 #   2. Implanta (ou atualiza) o Stack 06 via CloudFormation
 #      — A definição da máquina de estados está embutida no template YAML
-#        e é resolvida pelo CloudFormation via !ImportValue dos stacks 02, 04 e 05.
-#      — O pipeline executa Landing Zone → Bronze → Silver.
+#        e é resolvida pelo CloudFormation via !ImportValue dos stacks 02, 04, 05 e 07.
+#      — O pipeline executa Landing Zone → Bronze → Silver → Gold.
 # =============================================================================
 
 set -euo pipefail
@@ -61,7 +62,7 @@ if [[ ! -f "$PARAMS_FILE" ]]; then
 fi
 
 # Verifica se os stacks dependentes existem antes de tentar o deploy
-for DEPENDENCY in "eEDB015-02-lambda-ingestion" "eEDB015-04-glue-bronze" "eEDB015-05-glue-silver"; do
+for DEPENDENCY in "eEDB015-02-lambda-ingestion" "eEDB015-04-glue-bronze" "eEDB015-05-glue-silver" "eEDB015-07-glue-gold"; do
   STATUS=$(aws cloudformation describe-stacks \
     --region "$REGION" \
     --stack-name "$DEPENDENCY" \
@@ -72,7 +73,7 @@ for DEPENDENCY in "eEDB015-02-lambda-ingestion" "eEDB015-04-glue-bronze" "eEDB01
     echo "Erro: stack dependente '$DEPENDENCY' não está disponível (status: $STATUS)."
     echo "Execute os deploys na ordem correta antes de prosseguir:"
     echo "  1. ./infrastructure/scripts/deploy_lambda.sh"
-    echo "  2. ./infrastructure/scripts/deploy_glue_jobs.sh"
+    echo "  2. ./infrastructure/scripts/deploy_glue_jobs.sh  # deploya stacks 04, 05 e 07"
     exit 1
   fi
 done
@@ -121,7 +122,7 @@ STATE_MACHINE_ARN=$(aws cloudformation describe-stacks \
   --output text)
 
 echo ""
-echo "Para iniciar uma execução do pipeline completo (Landing → Bronze → Silver):"
+echo "Para iniciar uma execução do pipeline completo (Landing → Bronze → Silver → Gold):"
 echo ""
 echo "  aws stepfunctions start-execution \\"
 echo "    --state-machine-arn $STATE_MACHINE_ARN \\"

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
 # deploy_glue_jobs.sh — Faz upload dos scripts Glue para S3 e implanta os
-#                        stacks 04 (Glue Job Landing → Bronze) e
-#                        05 (Glue Job Bronze → Silver)
+#                        stacks 04 (Glue Job Landing → Bronze),
+#                        05 (Glue Job Bronze → Silver) e
+#                        07 (Glue Job Silver → Gold)
 #
 # Uso:
 #   ./infrastructure/scripts/deploy_glue_jobs.sh [parametros]
@@ -21,8 +22,11 @@
 #   2. Obtém o nome do bucket Landing Zone nos Outputs do Stack 01
 #   3. Faz upload de todos os scripts em src/glue_jobs/ para
 #      s3://{landing-bucket}/glue-scripts/
-#   4. Implanta (ou atualiza) o Stack 04 via CloudFormation (Landing → Bronze)
-#   5. Implanta (ou atualiza) o Stack 05 via CloudFormation (Bronze → Silver)
+#   4. Faz upload dos SQLs de inserção Gold em src/.sql/insert/ para
+#      s3://{landing-bucket}/glue-scripts/sql/gold/
+#   5. Implanta (ou atualiza) o Stack 04 via CloudFormation (Landing → Bronze)
+#   6. Implanta (ou atualiza) o Stack 05 via CloudFormation (Bronze → Silver)
+#   7. Implanta (ou atualiza) o Stack 07 via CloudFormation (Silver → Gold)
 # =============================================================================
 
 set -euo pipefail
@@ -49,11 +53,15 @@ PARAMS_ENV="${1:-dev}"
 STACK_01_NAME="eEDB015-01-storage"
 STACK_04_NAME="eEDB015-04-glue-bronze"
 STACK_05_NAME="eEDB015-05-glue-silver"
+STACK_07_NAME="eEDB015-07-glue-gold"
 TEMPLATE_04="$SCRIPT_DIR/../cloudformation/stacks/04-glue-bronze.yaml"
 TEMPLATE_05="$SCRIPT_DIR/../cloudformation/stacks/05-glue-silver.yaml"
+TEMPLATE_07="$SCRIPT_DIR/../cloudformation/stacks/07-glue-gold.yaml"
 PARAMS_FILE="$SCRIPT_DIR/../cloudformation/parameters/${PARAMS_ENV}.json"
 GLUE_SCRIPTS_DIR="$PROJECT_ROOT/src/glue_jobs"
+SQL_INSERT_DIR="$PROJECT_ROOT/src/.sql/insert"
 S3_SCRIPTS_PREFIX="glue-scripts"
+S3_SQL_GOLD_PREFIX="glue-scripts/sql/gold"
 
 # ---------------------------------------------------------------------------
 # Validações
@@ -75,6 +83,16 @@ fi
 
 if [[ ! -d "$GLUE_SCRIPTS_DIR" ]]; then
   echo "Erro: diretório de scripts Glue não encontrado em $GLUE_SCRIPTS_DIR"
+  exit 1
+fi
+
+if [[ ! -d "$SQL_INSERT_DIR" ]]; then
+  echo "Erro: diretório de SQLs Gold não encontrado em $SQL_INSERT_DIR"
+  exit 1
+fi
+
+if [[ ! -f "$TEMPLATE_07" ]]; then
+  echo "Erro: template não encontrado em $TEMPLATE_07"
   exit 1
 fi
 
@@ -125,7 +143,31 @@ fi
 echo "$SCRIPTS_FOUND script(s) enviado(s)."
 
 # ---------------------------------------------------------------------------
-# Passo 3: Implantar (ou atualizar) o Stack 04 (Landing → Bronze)
+# Passo 3: Upload dos SQLs de inserção Gold para o bucket Landing Zone
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Enviando SQLs Gold para s3://$LANDING_BUCKET/$S3_SQL_GOLD_PREFIX/"
+echo "===================================================================="
+
+SQL_FOUND=0
+for sql_file in "$SQL_INSERT_DIR"/*.sql; do
+  [[ -f "$sql_file" ]] || continue
+  filename="$(basename "$sql_file")"
+  aws s3 cp "$sql_file" "s3://$LANDING_BUCKET/$S3_SQL_GOLD_PREFIX/$filename" --region "$REGION"
+  echo "  Upload concluído: $filename"
+  SQL_FOUND=$((SQL_FOUND + 1))
+done
+
+if [[ $SQL_FOUND -eq 0 ]]; then
+  echo "Erro: nenhum arquivo .sql encontrado em $SQL_INSERT_DIR"
+  exit 1
+fi
+
+echo "$SQL_FOUND SQL(s) enviado(s)."
+
+# ---------------------------------------------------------------------------
+# Passo 5: Implantar (ou atualizar) o Stack 04 (Landing → Bronze)
 # ---------------------------------------------------------------------------
 echo ""
 echo "===================================================================="
@@ -164,7 +206,7 @@ aws cloudformation describe-stacks \
   --output table
 
 # ---------------------------------------------------------------------------
-# Passo 4: Implantar (ou atualizar) o Stack 05 (Bronze → Silver)
+# Passo 6: Implantar (ou atualizar) o Stack 05 (Bronze → Silver)
 # ---------------------------------------------------------------------------
 echo ""
 echo "===================================================================="
@@ -197,5 +239,42 @@ echo "---- Outputs Stack 05 ----------------------------------------------"
 aws cloudformation describe-stacks \
   --region "$REGION" \
   --stack-name "$STACK_05_NAME" \
+  --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+  --output table
+
+# ---------------------------------------------------------------------------
+# Passo 7: Implantar (ou atualizar) o Stack 07 (Silver → Gold)
+# ---------------------------------------------------------------------------
+echo ""
+echo "===================================================================="
+echo " Stack   : $STACK_07_NAME"
+echo " Template: $TEMPLATE_07"
+echo " Params  : $PARAMS_FILE + GlueJobScriptsBucket"
+echo " Região  : $REGION"
+echo "===================================================================="
+
+PARAMS=()
+while IFS= read -r param; do
+  PARAMS+=("$param")
+done < <(jq -r '.[] | "\(.ParameterKey)=\(.ParameterValue)"' "$PARAMS_FILE")
+PARAMS+=("GlueJobScriptsBucket=$LANDING_BUCKET")
+
+aws cloudformation deploy \
+  --region "$REGION" \
+  --template-file "$TEMPLATE_07" \
+  --stack-name "$STACK_07_NAME" \
+  --parameter-overrides "${PARAMS[@]}" \
+  --capabilities CAPABILITY_IAM \
+  --no-fail-on-empty-changeset
+
+echo ""
+echo "Stack '$STACK_07_NAME' implantado com sucesso."
+echo ""
+
+# Exibe os Outputs do stack 07
+echo "---- Outputs Stack 07 ----------------------------------------------"
+aws cloudformation describe-stacks \
+  --region "$REGION" \
+  --stack-name "$STACK_07_NAME" \
   --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
   --output table
