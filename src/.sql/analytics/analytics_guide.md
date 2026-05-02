@@ -7,7 +7,7 @@
 
 ## Visão Geral
 
-As oito queries estão distribuídas em quatro questões de negócio. Cada questão tem **uma query descritiva** (estrutura/distribuição) e **uma query analítica** (correlação/variação temporal). Nenhuma query usa JOIN com tabelas externas à camada Gold — elas são autossuficientes para consumo direto no PowerBI via conexão Athena.
+As dez queries estão distribuídas em quatro questões de negócio. Q1, Q2 e Q4 têm duas queries cada; Q3 tem quatro — duas analíticas e dois datasets de apoio. Nenhuma query usa JOIN com tabelas externas à camada Gold — elas são autossuficientes para consumo direto no PowerBI via conexão Athena.
 
 | Questão | Query | Tipo de visual sugerido |
 |---|---|---|
@@ -15,8 +15,10 @@ As oito queries estão distribuídas em quatro questões de negócio. Cada quest
 | Q1 | `custo_total_paciente_cronico` | Barras agrupadas + KPI card |
 | Q2 | `competicao_vs_premio_por_estado` | Scatter plot + mapa coroplético |
 | Q2 | `evolucao_yoy_premio` | Scatter (delta issuers × delta prêmio) |
-| Q3 | `correlacao_cobertura_premio` | Matriz de correlação + decomposição |
-| Q3 | `premio_por_categoria_beneficio` | Barras horizontais rankeadas |
+| Q3 | `correlacao_cobertura_premio` | Matriz heat map (metal_level × plan_type) |
+| Q3 | `premio_por_categoria_beneficio` | Barras horizontais (delta_premio_pct por categoria) |
+| Q3 | `faixa_cobertura_vs_premio` | Barras agrupadas (faixa cobertura × prêmio, cor = metal_level) |
+| Q3 | `dataset_analitico_plano` | Scatter plot (pct_cobertura × preco, cor = metal_level) |
 | Q4 | `premio_por_porte_rede` | Boxplot / barras por tier |
 | Q4 | `redes_pequenas_vs_media_estado` | Waterfall / divergente por estado |
 
@@ -148,56 +150,135 @@ Se esse padrão se confirmar nos dados, ele constitui evidência empírica da co
 
 **Questão:** Os benefícios fornecidos pelo plano são a única variável que influencia no valor final? É possível classificá-los e quantificar o peso de cada categoria sobre o preço do plano?
 
+**Estrutura da resposta (4 queries):** A Q3 usa duas queries analíticas (`correlacao_cobertura_premio` e `premio_por_categoria_beneficio`) e dois datasets de apoio (`faixa_cobertura_vs_premio` e `dataset_analitico_plano`). A sequência argumentativa recomendada é: primeiro demonstrar que benefícios não são a única variável (scatter do dataset), depois quantificar o peso de cada categoria (delta cobre × não cobre), e por fim mostrar a correlação fraca dentro de células controladas.
+
+---
+
 ### `correlacao_cobertura_premio.sql`
 
-**O que responde:** Calcula a correlação estatística (Pearson) entre a cobertura de benefícios (percentual de benefícios cobertos e copay médio) e o prêmio, segmentada por nível metálico, tipo de plano e ano.
+**O que responde:** Calcula correlações de Pearson entre cobertura de benefícios e prêmio, segmentadas por nível metálico, tipo de plano e ano. Inclui métricas de dispersão de preço dentro de cada célula para evidenciar que outros fatores além de benefícios explicam a variação.
 
 **Como a query funciona:**
 
-A CTE `benefit_score` agrega por plano a cobertura total: quantos benefícios o plano tem, quantos cobre, o percentual, e médias de copay e coinsurance (usando `COALESCE(..., 0)` para tratar planos sem cost-sharing como zero). A CTE `plan_price` usa o benchmark CMS (27 anos). O SELECT final usa `CORR(cobertura, prêmio)` — função Pearson nativa do Athena — para medir a força da associação dentro de cada célula `(metal_level, plan_type, ano)`.
+A CTE `benefit_score` agrega por plano: total de benefícios, quantos são cobertos, percentual, e estrutura de cost-sharing separando corretamente copay de coinsurance — sem `COALESCE(..., 0)`, que confundiria "plano sem copay" com "copay zero". A CTE `plan_price` usa o benchmark CMS (27 anos, sem preferência de tabaco). O SELECT final calcula três coeficientes de Pearson e métricas de dispersão de preço (stddev, min, max) dentro de cada célula `(metal_level, plan_type, ano)`.
+
+**Campos-chave:**
+
+- `desvio_padrao_premio` — argumento central: se alto dentro de uma célula (metal × plan_type), preços variam muito mesmo com cobertura similar, provando que outros fatores atuam
+- `pct_beneficios_com_copay` — fração dos benefícios cobertos que usam copay fixo (vs. coinsurance); sem distorção por COALESCE
+- `pct_premio_ehb_medio` — via `ehb_pct_premium` de `dim_plan`: fração do prêmio mandatada por lei; variável de precificação mais direta disponível
+- `corr_ehb_pct_premio` — correlação entre EHB% e prêmio; tipicamente a mais alta das três correlações
+- `corr_cobertura_premio` e `corr_num_beneficios_premio` — correlações de cobertura geral com prêmio; esperadas baixas (<0.4) quando controladas por metal_level
 
 **Argumento analítico:**
 
-O coeficiente `correlacao_cobertura_premio` responde diretamente se cobertura de benefícios explica variação de prêmio. Um coeficiente alto (>0.6) dentro de um mesmo metal_level indicaria que planos que cobrem mais benefícios são mais caros — o que sustentaria a hipótese da questão. Um coeficiente baixo sugeriria que outros fatores (porte da rede, área geográfica, tipo de plano) têm mais peso.
+O coeficiente `corr_cobertura_premio` baixo dentro de cada célula é evidência de que **benefícios não explicam sozinhos** a variação de preço. O `desvio_padrao_premio` alto dentro da mesma célula reforça: planos com cobertura similar têm preços muito diferentes — outros fatores (rede, estado, ehb_pct_premium) dominam.
 
-O coeficiente `correlacao_copay_premio` é a contraparte: planos com copay mais alto tendem a ter prêmio mais alto (modelo copay) ou mais baixo (trade-off: prêmio mais barato em troca de maior custo no ponto de uso)? Se negativo, confirma o trade-off estrutural copay-prêmio comum no mercado americano.
+O trade-off `corr_copay_premio` negativo confirma a lógica de mercado americano: prêmio e copay são compensatórios — planos com prêmio mais alto tendem a ter copay mais baixo, transferindo custo do ponto de uso para o prêmio mensal.
 
-A segmentação por `plan_type` é importante: HMOs e PPOs têm estruturas de benefícios distintas por design — mesclar os dois dilui a correlação real.
-
-**Limitação a declarar:**
-
-A query mede correlação de primeira ordem (linear, bivariada). O prêmio é determinado por múltiplas variáveis simultâneas (rede, geography, metal level, cobertura) — a correlação isolada não implica causalidade nem captura interações. O resultado é uma evidência descritiva, não causal.
+**Limitação a declarar:** Correlação de primeira ordem (linear, bivariada). O prêmio é determinado por múltiplas variáveis simultâneas — a correlação isolada é evidência descritiva, não causal.
 
 **Sugestões para BI (PowerBI):**
 
-- **Visual principal:** matriz de correlação — tabela de heat map com `metal_level` nas linhas, `plan_type` nas colunas e `correlacao_cobertura_premio` como valor com formatação condicional (verde para alta correlação positiva, vermelho para negativa). Esse visual comunica o resultado de forma imediata.
-- **Slicer:** `ano` — permite mostrar se a correlação se fortaleceu ou enfraqueceu de 2014 a 2016, o que indica maturação do mercado.
-- **KPI card:** `media_pct_cobertura` por `metal_level` — âncora de que Platinum cobre mais benefícios em média, contextualizando por que correlação é maior nesse tier.
-- **Melhoria sugerida na query:** o `avg_copay_geral` usa `COALESCE(copay_inn_tier1, 0)`, o que conflate planos sem copay (estrutura coinsurance) com planos de copay zero. Adicione um campo separado `pct_plans_with_copay = SUM(CASE WHEN copay_inn_tier1 IS NOT NULL THEN 1 END) / COUNT(*)` — isso revela qual fração dos planos em cada tier usa copay vs. coinsurance, o que é um resultado descritivo valioso por si só.
-- **Melhoria adicional:** incluir `dp.ehb_pct_premium` na saída (via JOIN com `dim_plan`). Esse campo mede diretamente qual fração do prêmio vai para cobrir EHBs — é a variável de precificação mais próxima da hipótese da Q3 e não está sendo explorada nas queries atuais.
+- **Visual principal:** matriz heat map — `metal_level` nas linhas, `plan_type` nas colunas, `corr_cobertura_premio` como valor com formatação condicional (verde = correlação alta, vermelho = baixa/negativa). Slicer por `ano` mostra se a correlação se fortaleceu com a maturação do mercado.
+- **Visual complementar:** gráfico de barras com `desvio_padrao_premio` por `metal_level` — visualmente demonstra que a dispersão de preço persiste independentemente de cobertura.
+- **KPI card:** `pct_premio_ehb_medio` por `metal_level` — âncora de que o EHB% cresce de Bronze para Platinum, explicando parte do diferencial de preço sem relação com cobertura "extra".
 
 ---
 
 ### `premio_por_categoria_beneficio.sql`
 
-**O que responde:** Para cada categoria de benefício (oncology, preventive, pharmacy, etc.), mostra o prêmio médio dos planos que cobrem aquela categoria, com médias de copay e coinsurance — ranking de quais categorias estão associadas a planos mais caros.
+**O que responde:** Para cada categoria de benefício e nível metálico, compara o prêmio médio dos planos que **cobrem** vs **não cobrem** aquela categoria. O `delta_premio_usd` e `delta_premio_pct` são o "peso financeiro" de cada categoria — controlados por metal_level para isolar o efeito da categoria do efeito do tier.
 
 **Como a query funciona:**
 
-O JOIN entre `fct_benefit_coverage` e `fct_plan_premium` é feito via `plan_sk + year_sk`. O filtro `is_covered = TRUE` garante que apenas planos que de fato cobrem a categoria são considerados. A subquery de `plan_price` agrega `avg_individual_rate` por plano (média de condados) antes do JOIN.
+A CTE `plan_category` agrega `fct_benefit_coverage` em uma linha por `(plan_sk, year_sk, benefit_category)` com flag `covers = 1/0` (MAX de `is_covered` na categoria). O JOIN com `dim_plan` e `plan_price` habilita a comparação direta de prêmios entre os dois grupos dentro do mesmo metal_level. O filtro `HAVING COUNT(DISTINCT plan_sk) >= 10` exclui combinações com amostra insuficiente.
 
-**Argumento analítico — e sua principal limitação:**
+**Campos-chave:**
 
-Esta query compara prêmios de planos que cobrem cada categoria. Como quase todos os planos cobrem benefícios básicos (primary_care, emergency), essas categorias terão amostras grandes e prêmios que refletem o mercado inteiro. Categorias mais especializadas (oncology, maternity) terão amostras menores e podem mostrar prêmios aparentemente mais altos simplesmente porque planos Platinum (mais caros) têm cobertura mais abrangente.
+- `pct_planos_cobrindo` — penetração da categoria no metal_level/ano: categorias com >95% são commodity (não diferenciam preço); <60% são diferenciadoras
+- `premio_medio_cobre_usd` vs `premio_medio_nao_cobre_usd` — comparação direta dentro do mesmo tier
+- `delta_premio_usd` e `delta_premio_pct` — o quanto a cobertura desta categoria está associada a prêmio mais alto; ranking direto de peso por categoria
 
-O argumento mais honesto não é "planos com cobertura oncológica são X% mais caros", mas sim: **dentro do mesmo `metal_level`, planos que cobrem categorias especializadas têm prêmio diferente dos que não cobrem?** A query atual não controla por metal_level nessa comparação.
+**Argumento analítico:**
+
+O argumento correto não é "planos com cobertura oncológica são X% mais caros" (correlação espúria com Platinum), mas sim: **dentro do mesmo `metal_level = 'Silver'`, planos Silver que cobrem oncology têm `delta_premio_pct` de Y% em relação aos Silver que não cobrem**. Esse delta isolado é o peso real da categoria.
+
+Categorias com `pct_planos_cobrindo > 95%` e `delta_premio_pct ≈ 0` são **commodities regulatórias** (ex: emergency, primary_care) — todos os planos cobrem e o preço não diferencia. Categorias com baixa penetração e `delta_premio_pct` alto (ex: oncology, maternity em alguns estados) são **diferenciadoras de preço** — a matriz penetração × delta é o principal visual da Q3.
+
+**Limitação a declarar:** O delta correlacional não implica causalidade — um `delta_premium_pct` positivo para oncology pode ser porque planos Platinum (já mais caros) cobrem mais categorias especializadas. A interpretação deve ser feita sempre dentro do mesmo `metal_level`, nunca cruzando tiers.
 
 **Sugestões para BI (PowerBI):**
 
-- **Visual principal:** barras horizontais rankeadas com `benefit_category` no eixo Y e `premio_medio_usd` no eixo X, coloridas por `ano`. Mostra se o ranking de categorias por custo mudou entre 2014 e 2016.
-- **Slicer:** `ano` (para comparação temporal).
-- **Melhoria crítica na query:** adicionar `dp.metal_level` como dimensão de saída (sem agrupar por ela, mas disponível como slicer no BI). No PowerBI, o usuário poderia filtrar por `metal_level = 'Silver'` e ver quais categorias diferenciam planos Silver mais caros dos mais baratos — respondendo mais diretamente à questão.
-- **Melhoria adicional:** adicionar `pct_planos_cobrindo = COUNT(DISTINCT fbc.plan_sk) / total_planos_no_ano` — a penetração da categoria no mercado. Categorias com alta penetração (>95%) são commodity; categorias com baixa penetração (<50%) são diferenciadoras de preço. Essa métrica transforma o gráfico de ranking simples em uma matriz `penetração × prêmio` muito mais argumentativa.
+- **Visual principal:** barras horizontais rankeadas com `benefit_category` no eixo Y, `delta_premio_pct` no eixo X, slicer por `metal_level` e `ano`. Slicer por `metal_level = 'Silver'` é o mais argumentativo — Silver é o tier mais comparável entre planos.
+- **Visual complementar:** scatter plot com `pct_planos_cobrindo` no eixo X e `delta_premio_pct` no eixo Y, uma bolha por categoria/tier — identifica visualmente quais categorias são commodity vs. diferenciadoras.
+- **Slicer recomendado:** `metal_level` como filtro principal + `ano` para comparação temporal.
+
+---
+
+### `faixa_cobertura_vs_premio.sql`
+
+**O que responde:** Dentro do mesmo nível metálico, planos com maior percentual de benefícios cobertos são mais caros? Agrupa planos em quatro faixas de cobertura e calcula prêmio médio, mediano e desvio padrão por faixa — revelando se a cobertura "bruta" de benefícios explica preço dentro de um mesmo tier.
+
+**Como a query funciona:**
+
+A CTE `benefit_score` calcula `pct_cobertura` por plano. O SELECT agrupa por `(metal_level, ano, faixa_cobertura)` — onde `faixa_cobertura` é um CASE bucketing `pct_cobertura` em `<70%`, `70-84%`, `85-94%`, `95-100%` — e calcula prêmio médio, mediano, desvio padrão e amplitude.
+
+**Campos-chave:**
+
+- `desvio_padrao_premio` dentro de cada faixa — argumento estrutural: se Silver com 90-95% de cobertura ainda tem stddev alto de prêmio, a cobertura bruta não determina o preço
+- `premio_mediano_usd` — robusto a outliers de planos Platinum de nicho dentro da faixa
+- `pct_premio_ehb_medio` — confirma se planos na faixa superior têm EHB% maior, explicando parte do diferencial de preço via mandato legal em vez de cobertura "extra"
+
+**Argumento analítico:**
+
+O visual responde diretamente: se os preços crescem monotonicamente de faixa 1 para faixa 4 dentro do mesmo metal_level, benefícios explicam preço. Se dentro da faixa `95-100%` o `desvio_padrao_premio` for grande (ex: $200+), planos com cobertura idêntica têm preços muito diferentes — provando que outros fatores dominam.
+
+O resultado esperado nos dados reais: **dentro de um mesmo metal_level, a faixa de cobertura explica pouco da variação de preço** — o salto de preço real ocorre entre metal_levels, não entre faixas dentro do mesmo tier.
+
+**Sugestões para BI (PowerBI):**
+
+- **Visual principal:** barras agrupadas com `faixa_cobertura` no eixo X, `premio_medio_usd` no eixo Y, cor por `metal_level`. O agrupamento por cor visualmente demonstra que o salto de preço entre metal levels domina sobre a variação entre faixas de cobertura.
+- **Visual complementar:** gráfico de barras de erro com `premio_medio_usd ± desvio_padrao_premio` por faixa — a largura das barras de erro dentro de cada faixa é o argumento visual para dispersão residual.
+- **Slicer:** `ano` para mostrar se a relação cobertura-preço mudou de 2014 a 2016 (maturação do mercado tende a comprimir dispersão).
+
+---
+
+### `dataset_analitico_plano.sql`
+
+**O que responde:** Dataset completo de uma linha por plano com preço, features estruturais (metal_level, plan_type, rede, estado) e score de cobertura de benefícios. Serve como base para scatter plots multivariados no PowerBI — o visual mais direto para demonstrar que benefícios não são a única variável de precificação.
+
+**Como a query funciona:**
+
+Três CTEs pré-agregam: `benefit_features` (score de cobertura + flags de categorias especiais via `dim_benefit_category`) e `plan_price` (prêmio benchmark por plano). O SELECT final une `dim_plan` + `dim_network` + as duas CTEs, produzindo uma linha por plano com ~30 colunas cobrindo variáveis estruturais, de rede, financeiras e de cobertura.
+
+**Campos estruturais incluídos (variáveis não-benefício):**
+
+- `nivel_metalico`, `tipo_plano` — classificação regulatória e de rede; as variáveis com maior poder explicativo de preço
+- `porte_rede` e `planos_na_rede` — via `dim_network.network_size_tier`; proxy de amplitude de rede
+- `pct_premio_ehb`, `moop_individual_usd`, `deductible_usd` — variáveis financeiras do plano
+- `rede_nacional`, `tem_wellness`, `plano_novo` — features binárias de produto
+
+**Campos de cobertura incluídos:**
+
+- `pct_cobertura`, `beneficios_cobertos`, `copay_medio`, `coinsurance_medio_pct`
+- Flags `tem_oncologia`, `tem_preventivo`, `tem_saude_mental`, `tem_cronico`
+- Contagens por categoria: `qtd_farmacia`, `qtd_maternidade`, `qtd_emergencia`, `qtd_especialista`, `qtd_atencao_basica`, `qtd_oncologia`
+
+**Argumento analítico:**
+
+O scatter plot `pct_cobertura × preco_mensal_usd` com cor por `nivel_metalico` é o visual mais poderoso da Q3. Se os pontos formarem **clusters verticais de cor** (Bronze no fundo, Platinum no topo) sem alinhamento com o eixo X de cobertura, o argumento está provado visualmente: metal_level determina o nível de preço independentemente do percentual de benefícios cobertos.
+
+Com slicers por `tipo_plano` e `porte_rede`, o usuário pode verificar se a relação muda para subgrupos específicos (ex: apenas HMOs, apenas redes pequenas).
+
+**Limitação a declarar:** Dataset sem amostragem — inclui todos os planos individuais ativos com dados de prêmio disponíveis. Para análises de regressão fora do BI, exportar via CTAS para Parquet na Gold ou baixar via Athena JDBC.
+
+**Sugestões para BI (PowerBI):**
+
+- **Visual principal:** scatter plot com `pct_cobertura` no eixo X, `preco_mensal_usd` no eixo Y, `nivel_metalico` como cor, `tipo_plano` como forma (circle/square/diamond). Slicer por `ano` e `estado`. Esse é o visual-âncora da apresentação da Q3 — mostra clusters de cor sem correlação clara com o eixo X.
+- **Visual complementar:** boxplot (usando visual de terceiros no PowerBI) de `preco_mensal_usd` por `nivel_metalico` com tooltip mostrando `pct_cobertura_medio` — evidencia que a amplitude de preço dentro de cada metal_level é grande e não explicada por cobertura.
+- **Slicers recomendados:** `ano`, `estado`, `tipo_plano`, `porte_rede` — combinações permitem verificar se a relação benefício-preço muda em subgrupos específicos.
+- **Uso avançado:** exportar o dataset como CSV via Athena e importar no PowerBI como tabela local para criar medidas DAX de correlação dinâmica (ex: `CORR(pct_cobertura, preco_mensal_usd)` filtrado pelo slicer de metal_level) — substitui a necessidade de reexecutar `correlacao_cobertura_premio.sql` para cada segmentação.
 
 ---
 
