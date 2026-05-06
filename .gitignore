@@ -1,3 +1,6 @@
+# Exports locais (CSVs para Power BI) — nunca commitar
+data/gold_exports/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
