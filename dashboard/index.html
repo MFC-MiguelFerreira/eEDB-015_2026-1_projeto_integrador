@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Insurance Marketplace — Dashboard Analítico</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222638;
+    --border: #2e3348;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --accent: #6366f1;
+    --bronze: #cd7f32;
+    --silver: #94a3b8;
+    --gold: #f59e0b;
+    --platinum: #a78bfa;
+    --catastrophic: #6b7280;
+    --tab-h: 48px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px 16px;
+  }
+  .header-inner { max-width: 1400px; margin: 0 auto; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+  /* ── Tabs ── */
+  .tabs-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .tabs-bar-inner { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; }
+  .tab-btn {
+    height: var(--tab-h); padding: 0 18px;
+    background: none; border: none; border-bottom: 3px solid transparent;
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: color .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ── Content ── */
+  .tab-panel { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel.active { display: block; }
+
+  /* ── Section header ── */
+  .section-header { margin-bottom: 24px; }
+  .section-header .label {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--accent); background: rgba(99,102,241,.12);
+    border: 1px solid rgba(99,102,241,.25); border-radius: 4px; padding: 2px 8px; margin-bottom: 10px;
+  }
+  .section-header h2 { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
+  .section-header p { color: var(--muted); line-height: 1.6; max-width: 800px; }
+
+  /* ── KPI Cards ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .kpi-card .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 6px; }
+  .kpi-card .kpi-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .kpi-card .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-card .kpi-value.bronze { color: var(--bronze); }
+  .kpi-card .kpi-value.silver { color: var(--silver); }
+  .kpi-card .kpi-value.gold { color: var(--gold); }
+  .kpi-card .kpi-value.platinum { color: var(--platinum); }
+  .kpi-card .kpi-value.accent { color: var(--accent); }
+
+  /* ── Chart cards ── */
+  .chart-grid { display: grid; gap: 20px; }
+  .chart-grid-2 { grid-template-columns: 1fr 1fr; }
+  .chart-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .chart-grid-12 { grid-template-columns: 1fr 2fr; }
+  .chart-grid-21 { grid-template-columns: 2fr 1fr; }
+  @media (max-width: 900px) {
+    .chart-grid-2, .chart-grid-3, .chart-grid-12, .chart-grid-21 { grid-template-columns: 1fr; }
+  }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 20px 16px;
+  }
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .chart-card .chart-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .chart-card .insight {
+    margin-top: 12px; padding: 10px 14px; border-radius: 6px;
+    background: rgba(99,102,241,.08); border-left: 3px solid var(--accent);
+    font-size: 12px; line-height: 1.6; color: var(--muted);
+  }
+  .chart-card .insight strong { color: var(--text); }
+
+  /* ── Divider ── */
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ── Legend ── */
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>Health Insurance Marketplace <span>— Analytics Dashboard</span></h1>
+    <p>ACA Individual Market · EUA · 2014–2016 · Escola Politécnica USP — eEDB-015/2026-1</p>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <div class="tabs-bar-inner">
+    <button class="tab-btn active" data-tab="overview">Visão Geral</button>
+    <button class="tab-btn" data-tab="q1">Q1 · Custos Oncológicos</button>
+    <button class="tab-btn" data-tab="q2">Q2 · Competição & Preços</button>
+    <button class="tab-btn" data-tab="q3">Q3 · Benefícios & Precificação</button>
+    <button class="tab-btn" data-tab="q4">Q4 · Rede & Preço</button>
+  </div>
+</div>
+
+<div id="tab-overview" class="tab-panel active">
+  <div class="section-header">
+    <div class="label">Visão Geral do Dataset</div>
+    <h2>O Mercado Federal de Seguros de Saúde dos EUA (ACA)</h2>
+    <p>O Health Insurance Marketplace foi criado pelo Affordable Care Act (ACA) em 2014. Os planos são vendidos em troca federal (hhs.gov) ou em exchanges estaduais próprios. Este dashboard analisa os dados federais de 2014 a 2016, com foco nos estados que participam do marketplace federal. Estados como CA, NY, MA e CO operam exchanges próprias e aparecem com dados ausentes nesta base.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Estados com dados federais</div>
+      <div class="kpi-value accent">32</div>
+      <div class="kpi-sub">de 51 estados/DC em 2016</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Planos analisados</div>
+      <div class="kpi-value accent">~1.200</div>
+      <div class="kpi-sub">planos individuais (2016)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Prêmio médio (Silver, 2016)</div>
+      <div class="kpi-value silver">$302</div>
+      <div class="kpi-sub">por mês · benchmark 27 anos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Prêmio médio (Bronze, 2016)</div>
+      <div class="kpi-value bronze">$263</div>
+      <div class="kpi-sub">por mês · benchmark 27 anos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Prêmio médio (Platinum, 2016)</div>
+      <div class="kpi-value platinum">$505</div>
+      <div class="kpi-sub">por mês · benchmark 27 anos</div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Prêmio Mensal Médio por Nível Metálico</h3>
+      <div class="chart-subtitle">Evolução do prêmio de referência CMS (27 anos, sem tabaco) de 2015 a 2016. O salto no Platinum em 2016 (+35%) reflete reajuste actuarial e saída de issuers de baixo custo.</div>
+      <div id="chart-ov-premium"></div>
+      <div class="insight"><strong>Leitura:</strong> O gap entre Bronze e Platinum cresceu de $140/mês em 2015 para $242/mês em 2016. Planos Catastrophic (voltados a jovens saudáveis) mantiveram prêmios mais baixos que Bronze em 2015, mas alcançaram valores similares em 2016.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Estados por Nível de Competição (Exchange Federal)</h3>
+      <div class="chart-subtitle">Distribuição dos estados participantes do marketplace federal segundo o número de seguradoras ativas: Monopoly (1), Low (2–3), Moderate (4–6), High (7+).</div>
+      <div id="chart-ov-competition"></div>
+      <div class="insight"><strong>Leitura:</strong> Em 2014, apenas 2 estados tinham dados federais completos. A expansão foi rápida: em 2015 já eram 32 estados com planos ativos. Mercados "High" (7+ seguradoras) dominam em número, mas ~19 estados operam sem dados na base federal.</div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Distribuição de Planos por Tipo</h3>
+      <div class="chart-subtitle">HMO e PPO dominam o mercado. EPO ganhou participação de 2015 para 2016. POS representa fatia menor, com características híbridas.</div>
+      <div id="chart-ov-plantype"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Prêmio Médio vs. Deductible Médio por Metal Level (2016)</h3>
+      <div class="chart-subtitle">Visualização do trade-off entre prêmio mensal e franquia anual. Planos com prêmio mais baixo têm deductible mais alto — a relação inversa é a base do design ACA.</div>
+      <div id="chart-ov-tradeoff"></div>
+      <div class="insight"><strong>Leitura:</strong> Bronze tem prêmio ~$263/mês mas deductible ~$4.500+. Platinum tem prêmio ~$505/mês mas deductible próximo de zero. Para pacientes que usam muito o plano, o custo total pode ser menor no Platinum.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Q1 -->
+<div id="tab-q1" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Questão 1</div>
+    <h2>Estrutura de Custos em Tratamentos Oncológicos</h2>
+    <p>Como evoluiu a relação entre Copay e Coinsurance para Quimioterapia e Terapia de Infusão de 2014 a 2016? Qual nível metálico minimiza a exposição financeira total do paciente oncológico crônico?</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Deductible Bronze (2015, Quimio)</div>
+      <div class="kpi-value bronze">$5.208</div>
+      <div class="kpi-sub">franquia média antes da cobertura</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Deductible Platinum (2015, Quimio)</div>
+      <div class="kpi-value platinum">$526</div>
+      <div class="kpi-sub">10× menor que Bronze</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">% planos Bronze c/ deductible</div>
+      <div class="kpi-value bronze">99%</div>
+      <div class="kpi-sub">exigem franquia antes da cobertura</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">% planos Platinum c/ deductible</div>
+      <div class="kpi-value platinum">76%</div>
+      <div class="kpi-sub">menor exposição ao custo oculto</div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Deductible Efetivo por Nível Metálico (Quimioterapia, 2015)</h3>
+      <div class="chart-subtitle">Franquia média que o paciente deve esgotar antes que o plano pague qualquer centavo do tratamento. Calculado apenas sobre planos que cobrem quimioterapia e exigem deductible prévio.</div>
+      <div id="chart-q1-deductible"></div>
+      <div class="insight"><strong>O custo oculto Bronze:</strong> Um paciente com Bronze iniciando quimioterapia paga em média <strong>$5.208 do próprio bolso</strong> antes de qualquer reembolso — a sessão custa $10K–$15K nos EUA. O deductible Platinum de $526 é pago na 1ª sessão e a cobertura entra imediatamente.</div>
+    </div>
+    <div class="chart-card">
+      <h3>% de Planos que Exigem Deductible Antes da Cobertura Oncológica (2015)</h3>
+      <div class="chart-subtitle">Percentual de planos cobertos para quimioterapia que ainda assim exigem o esgotamento completo do deductible antes de qualquer contribuição do plano.</div>
+      <div id="chart-q1-pct-ded"></div>
+      <div class="insight"><strong>Bronze "paga" mas exige tudo antes:</strong> 99% dos planos Bronze cobrem quimioterapia — mas quase todos exigem o deductible completo primeiro. "Cobertura" no papel ≠ cobertura no ponto de uso.</div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Exposição Financeira Anual do Paciente Oncológico</h3>
+      <div class="chart-subtitle">Custo total anual estimado = prêmio anual + custo de tratamento estimado (12 sessões). Benchmark: 27 anos, sem tabaco. O custo de tratamento cresce de 2015→2016 à medida que mais planos com coinsurance substituem copay fixo.</div>
+      <div id="chart-q1-total-cost"></div>
+      <div class="insight"><strong>O argumento central da Q1:</strong> Em 2016, Platinum custa <strong>$6.149/ano</strong> no total — quase o dobro de Bronze ($3.162). Mas isso inclui o prêmio elevado. A diferença real está no MOOP: se o paciente atinge o teto de desembolso, Platinum é protegido e Bronze continua exposto. A análise de MOOP (dados parciais) reforça esse ponto.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Coinsurance Médio para Quimioterapia por Metal Level (2015 vs 2016)</h3>
+      <div class="chart-subtitle">Percentual do custo da sessão que o paciente paga mesmo após esgotar o deductible. Valores calculados como média ponderada pelo número de planos por tipo (HMO/PPO/EPO/POS).</div>
+      <div id="chart-q1-coinsurance"></div>
+      <div class="insight"><strong>Surpresa 2016:</strong> A coinsurance de <strong>Gold e Silver aumentou</strong> entre 2015 e 2016 — Gold passou de 7,1% para 13,9%. Issuers transferiram risco para o paciente nos tiers intermediários. Platinum manteve coinsurance controlada, tornando-se mais previsível para tratamentos recorrentes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Q2 -->
+<div id="tab-q2" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Questão 2</div>
+    <h2>Competição e Precificação por Estado</h2>
+    <p>Qual é a correlação entre a densidade de competição — número de seguradoras operando no mesmo estado — e o prêmio médio cobrado ao consumidor? Estados com mais competidores praticam preços menores?</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Menor prêmio (alta competição)</div>
+      <div class="kpi-value accent">$181</div>
+      <div class="kpi-sub">Novo México, 2016 (4 issuers)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Maior prêmio (baixa competição)</div>
+      <div class="kpi-value accent">$535</div>
+      <div class="kpi-sub">Alaska, 2016 (2 issuers)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Variação máxima 2015→2016</div>
+      <div class="kpi-value accent">+37,5%</div>
+      <div class="kpi-sub">Alaska — duopólio persistente</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Maior queda 2015→2016</div>
+      <div class="kpi-value accent">-31%</div>
+      <div class="kpi-sub">Michigan — entrada massiva de issuers</div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom: 20px;">
+    <h3>Competição vs. Prêmio Médio Mensal por Estado (2015 e 2016)</h3>
+    <div class="chart-subtitle">Cada ponto é um estado em um ano. Eixo X: número de seguradoras ativas. Eixo Y: prêmio médio mensal (benchmark 27 anos). Cor: tier de competição. Apenas estados com dados de prêmio disponíveis são exibidos.</div>
+    <div id="chart-q2-scatter"></div>
+    <div class="insight"><strong>Padrão geral:</strong> A correlação negativa existe, mas <strong>é fraca</strong>. Estados como Iowa (3 issuers, $319–348) e Nova Jersey (6 issuers, $318–338) têm prêmios comparáveis a estados de alta competição. Fatores locais — custo de saúde, densidade demográfica, regulação estadual — explicam boa parte da variância residual. Alaska (2 issuers) é o outlier mais extremo: $389 em 2015 e $535 em 2016.</div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Variação de Prêmio 2015 → 2016 por Estado</h3>
+      <div class="chart-subtitle">Variação percentual do prêmio médio entre os dois anos, para estados com dados em ambos os períodos. Estados com variação negativa reduziram preços; positiva, aumentaram.</div>
+      <div id="chart-q2-yoy"></div>
+      <div class="insight"><strong>Michigan vs. Alaska:</strong> Michigan ganhou 8 issuers líquidos e reduziu o prêmio em 31%. Alaska manteve 2 issuers e o prêmio saltou 37,5%. O contraste é o argumento mais direto para a hipótese Q2.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Delta de Issuers vs. Variação de Prêmio (2014→2016)</h3>
+      <div class="chart-subtitle">Correlação entre variação de seguradoras e variação de prêmio para estados com dados nos dois extremos do período. Quadrante inferior direito (mais issuers, prêmio menor) confirma a hipótese.</div>
+      <div id="chart-q2-delta"></div>
+      <div class="insight"><strong>Hipótese confirmada parcialmente:</strong> Estados com ganho de issuers (delta positivo) tenderam a prêmios menores ou estáveis. O efeito não é uniforme — estados com características especiais (Alaska: geográfico; Iowa: poucas cidades) fogem do padrão.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Q3 -->
+<div id="tab-q3" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Questão 3</div>
+    <h2>Benefícios como Variável de Precificação</h2>
+    <p>Os benefícios cobertos pelo plano são a principal variável que determina o preço? É possível quantificar o peso de cada categoria de benefício sobre o prêmio final?</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Penetração de benefícios (2016)</div>
+      <div class="kpi-value accent">100%</div>
+      <div class="kpi-sub">todas as categorias obrigatórias cobertas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Diferença Silver → Gold (cobertura)</div>
+      <div class="kpi-value accent">&lt;1%</div>
+      <div class="kpi-sub">cobertura similar, prêmio +20%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Desvio padrão dentro de Silver (2016)</div>
+      <div class="kpi-value silver">$84</div>
+      <div class="kpi-sub">planos c/ cobertura similar, preços $180–596</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">EHB% médio (Bronze, 2016)</div>
+      <div class="kpi-value bronze">99,6%</div>
+      <div class="kpi-sub">mandato regulatório explica o prêmio</div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom: 20px;">
+    <h3>Cobertura de Benefícios vs. Prêmio Mensal — O Scatter Central da Q3</h3>
+    <div class="chart-subtitle">Cada ponto é uma célula (metal_level × tipo_plano × ano) com média de cobertura no eixo X e prêmio médio no eixo Y. Se benefícios determinassem o preço, veríamos uma linha diagonal. O que vemos são clusters verticais por cor (metal level) — o preço é determinado pelo tier, não pela cobertura.</div>
+    <div id="chart-q3-scatter"></div>
+    <div class="insight"><strong>Argumento visual central:</strong> Todos os tiers têm <strong>cobertura similar (77–85%)</strong> mas prêmios radicalmente diferentes. Bronze com 80% de cobertura custa $150–$290; Platinum com 78% custa $465–$583. O eixo X (cobertura) explica quase nada do eixo Y (preço). <strong>O nível metálico (tier regulatório) é o verdadeiro driver de preço.</strong></div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Prêmio Médio por Faixa de Cobertura e Metal Level (2016)</h3>
+      <div class="chart-subtitle">Planos agrupados em 3 faixas de % de benefícios cobertos. Dentro de cada metal level, planos com mais benefícios cobertos não são sistematicamente mais caros.</div>
+      <div id="chart-q3-bands"></div>
+      <div class="insight"><strong>Dentro do mesmo tier:</strong> Silver com 85–94% de cobertura ($296/mês) é <strong>mais barato</strong> que Silver com 70–84% ($304/mês). Ou seja, cobrir mais benefícios não implica pagar mais — o EHB mandatório nivela o mercado por dentro de cada tier.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Dispersão de Prêmio Dentro de Cada Metal Level (2016)</h3>
+      <div class="chart-subtitle">Boxplot do prêmio mensal por metal level (2016). A amplitude de cada caixa representa a variação de preços entre planos do mesmo tier — que têm cobertura de benefícios praticamente idêntica.</div>
+      <div id="chart-q3-box"></div>
+      <div class="insight"><strong>Silver tem a maior dispersão:</strong> Planos Silver custam de $180 a $596/mês. Planos de cobertura similar no mesmo tier variam $400+. Isso prova que fatores além de benefícios — estado, rede, tipo de plano — dominam a precificação.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Q4 -->
+<div id="tab-q4" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Questão 4</div>
+    <h2>Tamanho da Rede e Preço do Plano</h2>
+    <p>Seguradoras com redes de prestadores menores conseguem oferecer preços significativamente mais baixos? A amplitude da rede (proxy: número de planos por rede) está correlacionada com o prêmio?</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Rede grande Bronze vs. avg estado</div>
+      <div class="kpi-value accent">-16,7%</div>
+      <div class="kpi-sub">abaixo da média estadual (2016)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Rede pequena Silver vs. avg estado</div>
+      <div class="kpi-value accent">+11,8%</div>
+      <div class="kpi-sub">ACIMA da média estadual (2016)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Hipótese "redes pequenas = barato"</div>
+      <div class="kpi-value accent">❌</div>
+      <div class="kpi-sub">não confirmada nos dados Silver</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Estados com dados de rede (2016)</div>
+      <div class="kpi-value accent">14</div>
+      <div class="kpi-sub">amostra limitada — interpretar com cautela</div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2" style="margin-bottom: 20px;">
+    <div class="chart-card">
+      <h3>Desvio do Prêmio vs. Média Estadual — Bronze (2016)</h3>
+      <div class="chart-subtitle">Cada barra é um estado × porte de rede. Valores negativos = planos abaixo da média estadual. Todos os tiers de rede ficam abaixo da média para Bronze — porque Bronze é o tier mais básico e barato de cada estado.</div>
+      <div id="chart-q4-bronze"></div>
+      <div class="insight"><strong>Bronze é sempre abaixo da média:</strong> Independente do tamanho da rede, planos Bronze são ~17% abaixo da média estadual. O efeito de rede existe, mas é dominado pelo efeito de metal level.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Desvio do Prêmio vs. Média Estadual — Silver (2016)</h3>
+      <div class="chart-subtitle">Para Silver, o padrão inverte: redes pequenas estão ACIMA da média. Isso sugere que planos Silver de redes pequenas são produtos de nicho — não necessariamente mais baratos que redes grandes.</div>
+      <div id="chart-q4-silver"></div>
+      <div class="insight"><strong>Descoberta contra-intuitiva:</strong> Redes Silver pequenas cobram em média <strong>+11,8%</strong> acima da média estadual, enquanto redes grandes ficam na média (+0,9%). Redes pequenas no segmento Silver são produtos <strong>de nicho e premium</strong>, não de desconto.</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Prêmio Médio por Porte de Rede e Metal Level — Estados Selecionados (2016)</h3>
+    <div class="chart-subtitle">Comparação direta de prêmio médio por porte de rede dentro do mesmo metal level para estados com dados em múltiplos tiers de rede. Controla o efeito geográfico comparando apenas dentro do mesmo estado.</div>
+    <div id="chart-q4-comparison"></div>
+    <div class="insight"><strong>Conclusão Q4:</strong> O porte de rede <strong>não é um preditor confiável de desconto</strong>. Em NJ (estado com mais dados de múltiplos tiers), redes grandes Bronze custam $294/mês vs. redes médias $278/mês — diferença pequena. Para Silver, o padrão é inverso. A hipótese de "redes pequenas = barato" não se sustenta quando controlada por metal level e estado.</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// EMBEDDED DATA
+// ============================================================
+const COLORS = {
+  Catastrophic: '#6b7280',
+  Bronze:       '#cd7f32',
+  Silver:       '#94a3b8',
+  Gold:         '#f59e0b',
+  Platinum:     '#a78bfa',
+  high:     '#22c55e',
+  moderate: '#3b82f6',
+  low:      '#f97316',
+  monopoly: '#ef4444',
+  no_data:  '#374151',
+  large:    '#6366f1',
+  medium:   '#f59e0b',
+  small:    '#22c55e',
+  2015:     '#60a5fa',
+  2016:     '#f472b6',
+  EPO: '#60a5fa',
+  HMO: '#34d399',
+  POS: '#f472b6',
+  PPO: '#fbbf24'
+};
+
+const LAYOUT_DEFAULTS = {
+  paper_bgcolor: 'transparent',
+  plot_bgcolor: '#1a1d27',
+  font: { family: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', color: '#e2e8f0', size: 12 },
+  margin: { l: 50, r: 20, t: 10, b: 50 },
+  xaxis: { gridcolor: '#2e3348', zerolinecolor: '#2e3348', linecolor: '#2e3348' },
+  yaxis: { gridcolor: '#2e3348', zerolinecolor: '#2e3348', linecolor: '#2e3348' },
+  legend: { bgcolor: 'transparent', bordercolor: 'transparent' }
+};
+
+const PLOTLY_CONFIG = { displayModeBar: false, responsive: true };
+
+function layout(overrides = {}) {
+  return Object.assign({}, LAYOUT_DEFAULTS, overrides,
+    overrides.xaxis ? { xaxis: Object.assign({}, LAYOUT_DEFAULTS.xaxis, overrides.xaxis) } : {},
+    overrides.yaxis ? { yaxis: Object.assign({}, LAYOUT_DEFAULTS.yaxis, overrides.yaxis) } : {}
+  );
+}
+
+// ── OVERVIEW DATA ──
+const OV_PREMIUM = {
+  years: ['2015', '2016'],
+  metals: ['Catastrophic', 'Bronze', 'Silver', 'Gold', 'Platinum'],
+  values: {
+    Catastrophic: [197.44, 240.15],
+    Bronze:       [234.50, 263.66],
+    Silver:       [277.09, 301.66],
+    Gold:         [318.29, 360.66],
+    Platinum:     [374.06, 505.42]
+  }
+};
+
+const OV_COMPETITION = {
+  years: ['2014', '2015', '2016'],
+  high:     [0, 13, 13],
+  moderate: [1,  9, 10],
+  low:      [0,  9, 10],
+  monopoly: [1,  1,  1],
+  no_data:  [49, 19, 17]
+};
+
+const OV_PLANTYPE = {
+  types: ['HMO', 'PPO', 'EPO', 'POS'],
+  '2015': [126, 100, 86,  56],
+  '2016': [115, 104, 95,  59]
+};
+
+const OV_TRADEOFF = {
+  metals:    ['Catastrophic', 'Bronze',  'Silver',  'Gold',    'Platinum'],
+  premiums:  [240.15,          263.66,    301.66,    360.66,    505.42],
+  deductibles:[0,              4500,      2341,      716,       0]
+};
+
+// ── Q1 DATA ──
+const Q1_DEDUCTIBLE = {
+  metals:     ['Bronze', 'Silver', 'Gold', 'Platinum'],
+  deductible: [5208,      3466,     1496,    526]
+};
+
+const Q1_PCT_DED = {
+  metals: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+  pct:    [99.2,      96.8,     93.2,   76.2]
+};
+
+const Q1_TOTAL_COST = {
+  metals: ['Catastrophic', 'Bronze', 'Silver', 'Gold', 'Platinum'],
+  '2015_premio':    [2369, 2815, 3327, 3822, 4489],
+  '2015_tratamento':[0,    0,    45,   113,  145],
+  '2016_premio':    [2882, 3158, 3620, 4333, 6065],
+  '2016_tratamento':[0,    4,    105,  89,   84]
+};
+
+const Q1_COINSURANCE = {
+  metals: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+  '2015': [1.7, 10.9, 7.1, 4.9],
+  '2016': [4.3,  8.2, 13.9, 11.5]
+};
+
+// ── Q2 DATA ──
+const Q2_SCATTER = [
+  // [state, issuers, premium, tier, year, region]
+  ['OH','Ohio',16,254.4,'high','Midwest',2015],
+  ['MI','Michigan',16,286.26,'high','Midwest',2015],
+  ['WI','Wisconsin',15,325.01,'high','Midwest',2015],
+  ['FL','Florida',14,232.92,'high','South',2015],
+  ['AZ','Arizona',13,240.51,'high','West',2015],
+  ['OR','Oregon',10,192.64,'high','West',2015],
+  ['VA','Virginia',9,268.88,'high','South',2015],
+  ['NJ','New Jersey',6,318.37,'moderate','Northeast',2015],
+  ['UT','Utah',6,208.67,'moderate','West',2015],
+  ['NM','New Mexico',5,215.75,'moderate','West',2015],
+  ['AR','Arkansas',4,227.2,'moderate','South',2015],
+  ['SD','South Dakota',3,183.63,'low','Midwest',2015],
+  ['IA','Iowa',3,319.1,'low','Midwest',2015],
+  ['AK','Alaska',2,389.0,'low','West',2015],
+  ['TX','Texas',19,228.81,'high','South',2016],
+  ['OH','Ohio',17,236.67,'high','Midwest',2016],
+  ['WI','Wisconsin',16,319.64,'high','Midwest',2016],
+  ['MI','Michigan',14,197.67,'high','Midwest',2016],
+  ['VA','Virginia',11,289.45,'high','South',2016],
+  ['OR','Oregon',10,237.75,'high','West',2016],
+  ['FL','Florida',10,231.29,'high','South',2016],
+  ['AZ','Arizona',8,216.37,'high','West',2016],
+  ['NJ','New Jersey',6,338.66,'moderate','Northeast',2016],
+  ['AR','Arkansas',5,244.18,'moderate','South',2016],
+  ['UT','Utah',4,209.16,'moderate','West',2016],
+  ['IA','Iowa',4,348.08,'moderate','Midwest',2016],
+  ['NM','New Mexico',4,181.34,'moderate','West',2016],
+  ['ME','Maine',3,262.89,'low','Northeast',2016],
+  ['AK','Alaska',2,534.91,'low','West',2016]
+];
+
+const Q2_YOY = [
+  ['MI', 'Michigan',      -30.95,  8],
+  ['NM', 'New Mexico',    -15.95, -1],
+  ['AZ', 'Arizona',       -10.04, -5],
+  ['OH', 'Ohio',           -6.97, 16],
+  ['WI', 'Wisconsin',      -1.65,  1],
+  ['FL', 'Florida',        -0.70, -4],
+  ['UT', 'Utah',            0.23, -2],
+  ['NJ', 'New Jersey',      6.37,  0],
+  ['VA', 'Virginia',        7.65,  2],
+  ['AR', 'Arkansas',        7.47,  1],
+  ['IA', 'Iowa',            9.08,  1],
+  ['OR', 'Oregon',         23.42,  0],
+  ['AK', 'Alaska',         37.51,  0]
+];
+
+// delta_issuers × variacao_pct (from q2_evolucao_yoy, states with both 2014 and 2016 data)
+const Q2_DELTA = [
+  ['MI', 'Michigan',  8, -24.0],
+  ['OH', 'Ohio',     16, null]  // only has 2015→2016 change
+];
+
+// ── Q3 DATA ──
+const Q3_SCATTER = [
+  // [metal, plan_type, coverage_pct, premium, n_plans, ano]
+  ['Bronze','EPO',80.2,284.55,28,2016],
+  ['Bronze','HMO',79.1,195.09,28,2016],
+  ['Bronze','POS',77.3,296.92,26,2016],
+  ['Bronze','PPO',78.0,277.90,33,2016],
+  ['Silver','EPO',79.2,298.47,32,2016],
+  ['Silver','HMO',80.4,254.88,40,2016],
+  ['Silver','POS',77.9,363.22,24,2016],
+  ['Silver','PPO',79.2,315.43,36,2016],
+  ['Gold','EPO',79.8,403.40,26,2016],
+  ['Gold','HMO',79.4,299.60,34,2016],
+  ['Gold','POS',78.2,402.27,10,2016],
+  ['Gold','PPO',79.1,388.12,20,2016],
+  ['Platinum','EPO',78.0,524.93,8,2016],
+  ['Platinum','HMO',83.1,496.19,2,2016],
+  ['Platinum','POS',78.0,491.66,10,2016],
+  ['Catastrophic','EPO',80.0,236.29,10,2016],
+  ['Catastrophic','HMO',85.2,187.48,4,2016],
+  ['Catastrophic','POS',76.8,230.87,4,2016],
+  ['Catastrophic','PPO',77.3,268.79,10,2016],
+  // 2015 data
+  ['Bronze','EPO',79.8,267.75,26,2015],
+  ['Bronze','HMO',80.2,187.51,34,2015],
+  ['Bronze','POS',77.3,271.97,26,2015],
+  ['Bronze','PPO',78.0,228.78,40,2015],
+  ['Silver','EPO',79.4,284.91,32,2015],
+  ['Silver','HMO',80.5,239.35,42,2015],
+  ['Silver','POS',77.8,331.57,24,2015],
+  ['Silver','PPO',78.2,277.84,37,2015],
+  ['Gold','EPO',79.4,371.05,26,2015],
+  ['Gold','HMO',80.5,281.84,36,2015],
+  ['Gold','POS',78.2,365.85,10,2015],
+  ['Gold','PPO',79.4,303.00,35,2015],
+  ['Platinum','EPO',77.1,450.62,8,2015],
+  ['Platinum','HMO',82.7,314.41,10,2015],
+  ['Platinum','POS',78.9,445.24,12,2015],
+  ['Platinum','PPO',82.5,311.91,14,2015],
+  ['Catastrophic','EPO',80.9,222.85,10,2015],
+  ['Catastrophic','HMO',81.5,135.38,10,2015],
+  ['Catastrophic','POS',76.8,210.63,4,2015],
+  ['Catastrophic','PPO',77.3,228.81,10,2015]
+];
+
+const Q3_BANDS = {
+  metals: ['Catastrophic', 'Bronze', 'Silver', 'Gold', 'Platinum'],
+  band2: [242.25, 264.52, 303.63, 361.59, 505.42],
+  band3: [212.83, 284.49, 296.07, 391.69, null],
+  n_band2: [26, 109, 121, 83, 20],
+  n_band3: [2, 4, 9, 5, 0]
+};
+
+const Q3_BOX = {
+  Catastrophic: { min: 161.71, q1: 189.58, median: 230.87, q3: 268.79, max: 412.0 },
+  Bronze:       { min: 151.63, q1: 195.09, median: 264.52, q3: 284.55, max: 490.0 },
+  Silver:       { min: 180.33, q1: 254.88, median: 301.66, q3: 338.66, max: 596.0 },
+  Gold:         { min: 212.04, q1: 299.60, median: 374.0,  q3: 403.40, max: 697.0 },
+  Platinum:     { min: 465.67, q1: 491.66, median: 496.19, q3: 524.93, max: 583.07 }
+};
+
+// ── Q4 DATA ──
+const Q4_BRONZE_2016 = [
+  // [state, porte_rede, variacao_pct]
+  ['MI', 'large', -20.34],
+  ['NJ', 'large', -13.11],
+  ['NJ', 'medium', -17.91],
+  ['NM', 'large', -16.38],
+  ['OH', 'large', -20.01],
+  ['OR', 'large', -12.32],
+  ['OR', 'medium', -21.35],
+  ['AR', 'large', -17.06],
+  ['AR', 'small', -15.11],
+  ['AK', 'large', -10.0],
+  ['IA', 'large', -13.53],
+  ['FL', 'large', -16.13],
+  ['ME', 'large', -12.26],
+  ['TX', 'large', -19.94],
+  ['UT', 'large', -16.31],
+  ['VA', 'large', -31.85],
+  ['VA', 'small', -18.38],
+  ['WI', 'large', -13.47]
+];
+
+const Q4_SILVER_2016 = [
+  ['MI', 'large',  -4.02],
+  ['NJ', 'large',  -7.75],
+  ['NJ', 'medium', -3.50],
+  ['NM', 'large',  -0.56],
+  ['OH', 'large',  -3.92],
+  ['OR', 'large',   5.68],
+  ['OR', 'medium', -5.36],
+  ['AR', 'large',   0.91],
+  ['AR', 'small',  10.38],
+  ['AK', 'large',   8.23],
+  ['IA', 'large',   3.03],
+  ['FL', 'large',  -0.67],
+  ['ME', 'large',   8.17],
+  ['TX', 'large',  -4.31],
+  ['UT', 'large',  -0.59],
+  ['VA', 'large',   6.17],
+  ['VA', 'small',  13.29],
+  ['WI', 'large',   1.63]
+];
+
+// NJ has data for multiple network tiers — good for within-state comparison
+const Q4_NJ_COMPARISON = {
+  metals: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+  large:  [294.25, 312.42, 402.27, 521.81],
+  medium: [278.02, 326.79, 395.49, 560.58]
+};
+
+// ============================================================
+// CHART FUNCTIONS
+// ============================================================
+
+function initOverview() {
+  // Chart 1: Premium by metal level (grouped bar)
+  const traces1 = OV_PREMIUM.metals.map(m => ({
+    name: m, type: 'bar',
+    x: OV_PREMIUM.years,
+    y: OV_PREMIUM.values[m],
+    marker: { color: COLORS[m] },
+    text: OV_PREMIUM.values[m].map(v => '$' + v.toFixed(0)),
+    textposition: 'outside', textfont: { size: 11 }
+  }));
+  Plotly.newPlot('chart-ov-premium', traces1, layout({
+    barmode: 'group',
+    height: 300,
+    yaxis: { title: 'Prêmio Mensal (USD)', tickprefix: '$' },
+    xaxis: { title: 'Ano' },
+    legend: { orientation: 'h', y: -0.2, x: 0 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 2: Competition tiers stacked bar
+  const comp = OV_COMPETITION;
+  const traces2 = [
+    { name: 'High (7+ issuers)', type: 'bar', x: comp.years, y: comp.high, marker: { color: COLORS.high } },
+    { name: 'Moderate (4–6)',    type: 'bar', x: comp.years, y: comp.moderate, marker: { color: COLORS.moderate } },
+    { name: 'Low (2–3)',         type: 'bar', x: comp.years, y: comp.low, marker: { color: COLORS.low } },
+    { name: 'Monopoly (1)',      type: 'bar', x: comp.years, y: comp.monopoly, marker: { color: COLORS.monopoly } },
+    { name: 'Sem dados federais',type: 'bar', x: comp.years, y: comp.no_data, marker: { color: COLORS.no_data } }
+  ];
+  Plotly.newPlot('chart-ov-competition', traces2, layout({
+    barmode: 'stack',
+    height: 300,
+    yaxis: { title: 'Número de Estados' },
+    xaxis: { title: 'Ano' },
+    legend: { orientation: 'h', y: -0.3, x: 0, font: { size: 11 } }
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: Plan type distribution
+  const traces3 = [
+    { name: '2015', type: 'bar', x: OV_PLANTYPE.types, y: OV_PLANTYPE['2015'], marker: { color: COLORS[2015] } },
+    { name: '2016', type: 'bar', x: OV_PLANTYPE.types, y: OV_PLANTYPE['2016'], marker: { color: COLORS[2016] } }
+  ];
+  Plotly.newPlot('chart-ov-plantype', traces3, layout({
+    barmode: 'group', height: 280,
+    yaxis: { title: 'Nº de planos (amostra)' },
+    xaxis: { title: 'Tipo de Plano' },
+    legend: { orientation: 'h', y: -0.25 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 4: Premium vs Deductible tradeoff
+  const traces4 = [{
+    type: 'scatter', mode: 'markers+text',
+    x: OV_TRADEOFF.deductibles,
+    y: OV_TRADEOFF.premiums,
+    text: OV_TRADEOFF.metals,
+    textposition: 'top center',
+    marker: {
+      color: OV_TRADEOFF.metals.map(m => COLORS[m]),
+      size: 18, line: { color: '#fff', width: 1 }
+    }
+  }];
+  Plotly.newPlot('chart-ov-tradeoff', traces4, layout({
+    height: 280,
+    xaxis: { title: 'Deductible Médio Anual (USD)', tickprefix: '$' },
+    yaxis: { title: 'Prêmio Mensal Médio (USD)', tickprefix: '$' },
+    showlegend: false
+  }), PLOTLY_CONFIG);
+}
+
+function initQ1() {
+  // Chart 1: Deductible by metal level
+  Plotly.newPlot('chart-q1-deductible', [{
+    type: 'bar',
+    x: Q1_DEDUCTIBLE.metals,
+    y: Q1_DEDUCTIBLE.deductible,
+    marker: { color: Q1_DEDUCTIBLE.metals.map(m => COLORS[m]) },
+    text: Q1_DEDUCTIBLE.deductible.map(v => '$' + v.toLocaleString()),
+    textposition: 'outside'
+  }], layout({
+    height: 300,
+    yaxis: { title: 'Deductible Efetivo Médio (USD)', tickprefix: '$' },
+    xaxis: { title: 'Nível Metálico' },
+    showlegend: false,
+    annotations: [{
+      x: 'Bronze', y: 5208, text: '10× maior<br>que Platinum',
+      showarrow: true, arrowhead: 2, ax: 60, ay: -30,
+      font: { color: '#f87171', size: 11 }
+    }]
+  }), PLOTLY_CONFIG);
+
+  // Chart 2: % subject to deductible
+  Plotly.newPlot('chart-q1-pct-ded', [{
+    type: 'bar',
+    x: Q1_PCT_DED.metals,
+    y: Q1_PCT_DED.pct,
+    marker: {
+      color: Q1_PCT_DED.metals.map(m => COLORS[m]),
+      opacity: 0.9
+    },
+    text: Q1_PCT_DED.pct.map(v => v + '%'),
+    textposition: 'outside'
+  }], layout({
+    height: 300,
+    yaxis: { title: '% dos Planos Cobertos', range: [0, 115], ticksuffix: '%' },
+    xaxis: { title: 'Nível Metálico' },
+    showlegend: false,
+    shapes: [{ type: 'line', x0: -0.5, x1: 3.5, y0: 100, y1: 100,
+      line: { color: '#ef4444', dash: 'dot', width: 1 } }]
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: Total patient annual cost (stacked bar)
+  const metals5 = Q1_TOTAL_COST.metals;
+  const traces3 = [
+    {
+      name: 'Prêmio Anual 2015', type: 'bar',
+      x: metals5, y: Q1_TOTAL_COST['2015_premio'],
+      marker: { color: COLORS[2015], opacity: 0.9 }
+    },
+    {
+      name: 'Tratamento Estimado 2015', type: 'bar',
+      x: metals5, y: Q1_TOTAL_COST['2015_tratamento'],
+      marker: { color: '#f97316', opacity: 0.9 }
+    },
+    {
+      name: 'Prêmio Anual 2016', type: 'bar',
+      x: metals5, y: Q1_TOTAL_COST['2016_premio'],
+      marker: { color: COLORS[2016], opacity: 0.9 }
+    },
+    {
+      name: 'Tratamento Estimado 2016', type: 'bar',
+      x: metals5, y: Q1_TOTAL_COST['2016_tratamento'],
+      marker: { color: '#fb923c', opacity: 0.9 }
+    }
+  ];
+  // Use grouped-stacked: combine premio+tratamento per year
+  const total2015 = metals5.map((m,i) => Q1_TOTAL_COST['2015_premio'][i] + Q1_TOTAL_COST['2015_tratamento'][i]);
+  const total2016 = metals5.map((m,i) => Q1_TOTAL_COST['2016_premio'][i] + Q1_TOTAL_COST['2016_tratamento'][i]);
+  Plotly.newPlot('chart-q1-total-cost', [
+    {
+      name: '2015 — Prêmio', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2015_premio'],
+      marker: { color: COLORS[2015] }, legendgroup: '2015', offsetgroup: '2015'
+    },
+    {
+      name: '2015 — Tratamento', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2015_tratamento'],
+      marker: { color: '#f97316' }, legendgroup: '2015', offsetgroup: '2015'
+    },
+    {
+      name: '2016 — Prêmio', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2016_premio'],
+      marker: { color: COLORS[2016] }, legendgroup: '2016', offsetgroup: '2016'
+    },
+    {
+      name: '2016 — Tratamento', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2016_tratamento'],
+      marker: { color: '#f472b6' }, legendgroup: '2016', offsetgroup: '2016'
+    }
+  ], layout({
+    barmode: 'stack', height: 320,
+    yaxis: { title: 'Custo Anual (USD)', tickprefix: '$' },
+    xaxis: { title: 'Nível Metálico' },
+    legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
+  }), PLOTLY_CONFIG);
+
+  // Chart 4: Coinsurance line chart
+  Plotly.newPlot('chart-q1-coinsurance', [
+    {
+      name: '2015', type: 'bar',
+      x: Q1_COINSURANCE.metals,
+      y: Q1_COINSURANCE['2015'],
+      marker: { color: COLORS[2015] },
+      offsetgroup: '2015',
+      text: Q1_COINSURANCE['2015'].map(v => v + '%'), textposition: 'outside'
+    },
+    {
+      name: '2016', type: 'bar',
+      x: Q1_COINSURANCE.metals,
+      y: Q1_COINSURANCE['2016'],
+      marker: { color: COLORS[2016] },
+      offsetgroup: '2016',
+      text: Q1_COINSURANCE['2016'].map(v => v + '%'), textposition: 'outside'
+    }
+  ], layout({
+    barmode: 'group', height: 320,
+    yaxis: { title: 'Coinsurance Médio (%)', ticksuffix: '%' },
+    xaxis: { title: 'Nível Metálico' },
+    legend: { orientation: 'h', y: -0.25 }
+  }), PLOTLY_CONFIG);
+}
+
+function initQ2() {
+  // Chart 1: Scatter - issuers vs premium
+  const tiers = ['high', 'moderate', 'low'];
+  const tierLabels = { high: 'High (7+)', moderate: 'Moderate (4–6)', low: 'Low (2–3)' };
+  const years = [2015, 2016];
+  const shapes = { 2015: 'circle', 2016: 'diamond' };
+
+  const scatterTraces = [];
+  tiers.forEach(tier => {
+    years.forEach(year => {
+      const pts = Q2_SCATTER.filter(d => d[4] === tier && d[6] === year);
+      scatterTraces.push({
+        name: `${tierLabels[tier]} · ${year}`,
+        type: 'scatter', mode: 'markers+text',
+        x: pts.map(d => d[2]),
+        y: pts.map(d => d[3]),
+        text: pts.map(d => d[0]),
+        textposition: 'top center', textfont: { size: 10 },
+        marker: {
+          color: COLORS[tier], size: 12, opacity: year === 2015 ? 0.7 : 1,
+          symbol: shapes[year], line: { color: '#fff', width: 1 }
+        },
+        legendgroup: tier
+      });
+    });
+  });
+  Plotly.newPlot('chart-q2-scatter', scatterTraces, layout({
+    height: 380,
+    xaxis: { title: 'Número de Seguradoras Ativas' },
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$' },
+    legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
+  }), PLOTLY_CONFIG);
+
+  // Chart 2: YoY change bar
+  const yoy = Q2_YOY.sort((a,b) => a[2] - b[2]);
+  Plotly.newPlot('chart-q2-yoy', [{
+    type: 'bar',
+    orientation: 'h',
+    x: yoy.map(d => d[2]),
+    y: yoy.map(d => d[0]),
+    text: yoy.map(d => (d[2] > 0 ? '+' : '') + d[2].toFixed(1) + '%'),
+    textposition: 'outside',
+    marker: {
+      color: yoy.map(d => d[2] < 0 ? '#22c55e' : '#ef4444')
+    }
+  }], layout({
+    height: 360,
+    xaxis: { title: 'Variação % 2015→2016', ticksuffix: '%',
+      zeroline: true, zerolinecolor: '#8892a4', zerolinewidth: 1 },
+    yaxis: { title: '' },
+    showlegend: false,
+    margin: { l: 40, r: 60, t: 10, b: 50 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: Delta issuers × variacao premium
+  const allYoy = [
+    ['MI', -30.95, 8], ['AZ', -10.04, -5], ['NM', -15.95, -1],
+    ['OH', -6.97, 16], ['WI', -1.65, 1], ['FL', -0.70, -4],
+    ['UT', 0.23, -2], ['NJ', 6.37, 0], ['VA', 7.65, 2],
+    ['AR', 7.47, 1], ['IA', 9.08, 1], ['OR', 23.42, 0], ['AK', 37.51, 0]
+  ];
+  Plotly.newPlot('chart-q2-delta', [{
+    type: 'scatter', mode: 'markers+text',
+    x: allYoy.map(d => d[2]),
+    y: allYoy.map(d => d[1]),
+    text: allYoy.map(d => d[0]),
+    textposition: 'top center', textfont: { size: 11 },
+    marker: {
+      color: allYoy.map(d => d[2] > 0 ? '#22c55e' : d[2] < 0 ? '#ef4444' : '#6b7280'),
+      size: 14, line: { color: '#fff', width: 1 }
+    }
+  }], layout({
+    height: 360,
+    xaxis: { title: 'Δ Seguradoras (2014→2016)', zeroline: true, zerolinecolor: '#8892a4' },
+    yaxis: { title: 'Variação Prêmio % (2015→2016)', ticksuffix: '%',
+             zeroline: true, zerolinecolor: '#8892a4' },
+    showlegend: false,
+    shapes: [
+      { type: 'rect', x0: 0, x1: 20, y0: -40, y1: 0,
+        fillcolor: 'rgba(34,197,94,0.06)', line: { width: 0 } },
+      { type: 'rect', x0: -8, x1: 0, y0: 0, y1: 40,
+        fillcolor: 'rgba(239,68,68,0.06)', line: { width: 0 } }
+    ],
+    annotations: [
+      { x: 12, y: -25, text: 'Mais competição<br>→ preço cai', showarrow: false,
+        font: { color: '#22c55e', size: 10 }, bgcolor: 'rgba(0,0,0,0.4)' },
+      { x: -5, y: 30, text: 'Menos competição<br>→ preço sobe', showarrow: false,
+        font: { color: '#ef4444', size: 10 }, bgcolor: 'rgba(0,0,0,0.4)' }
+    ]
+  }), PLOTLY_CONFIG);
+}
+
+function initQ3() {
+  // Chart 1: Scatter coverage vs premium
+  const metals_q3 = ['Catastrophic', 'Bronze', 'Silver', 'Gold', 'Platinum'];
+  const scatterTraces = metals_q3.map(m => {
+    const pts = Q3_SCATTER.filter(d => d[0] === m && d[5] === 2016);
+    return {
+      name: m, type: 'scatter', mode: 'markers',
+      x: pts.map(d => d[2]),
+      y: pts.map(d => d[3]),
+      text: pts.map(d => `${m} ${d[1]}<br>Cobertura: ${d[2]}%<br>Prêmio: $${d[3]}<br>${d[4]} planos`),
+      hoverinfo: 'text',
+      marker: {
+        color: COLORS[m], size: pts.map(d => Math.sqrt(d[4]) * 3 + 8),
+        opacity: 0.85, line: { color: '#fff', width: 1 }
+      }
+    };
+  });
+  Plotly.newPlot('chart-q3-scatter', scatterTraces, layout({
+    height: 380,
+    xaxis: { title: '% Benefícios Cobertos', ticksuffix: '%', range: [72, 90] },
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$' },
+    legend: { orientation: 'h', y: -0.25 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 2: Coverage band vs premium (grouped bar)
+  const bandTraces = [
+    {
+      name: '70–84% cobertura', type: 'bar',
+      x: Q3_BANDS.metals,
+      y: Q3_BANDS.band2,
+      marker: { color: COLORS[2015] },
+      text: Q3_BANDS.band2.map((v,i) => v ? ('$' + v.toFixed(0) + ' (n=' + Q3_BANDS.n_band2[i] + ')') : ''),
+      textposition: 'outside', textfont: { size: 10 }
+    },
+    {
+      name: '85–94% cobertura', type: 'bar',
+      x: Q3_BANDS.metals,
+      y: Q3_BANDS.band3,
+      marker: { color: COLORS[2016] },
+      text: Q3_BANDS.band3.map((v,i) => v ? ('$' + v.toFixed(0) + ' (n=' + Q3_BANDS.n_band3[i] + ')') : ''),
+      textposition: 'outside', textfont: { size: 10 }
+    }
+  ];
+  Plotly.newPlot('chart-q3-bands', bandTraces, layout({
+    barmode: 'group', height: 300,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$' },
+    xaxis: { title: 'Nível Metálico' },
+    legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: Box plot approximation with bar + error bars
+  const mets = Object.keys(Q3_BOX);
+  const boxData = mets.map(m => ({
+    type: 'box',
+    name: m,
+    q1: [Q3_BOX[m].q1],
+    median: [Q3_BOX[m].median],
+    q3: [Q3_BOX[m].q3],
+    lowerfence: [Q3_BOX[m].min],
+    upperfence: [Q3_BOX[m].max],
+    marker: { color: COLORS[m] },
+    fillcolor: COLORS[m] + '40',
+    line: { color: COLORS[m] }
+  }));
+  Plotly.newPlot('chart-q3-box', boxData, layout({
+    height: 300,
+    yaxis: { title: 'Prêmio Mensal (USD)', tickprefix: '$' },
+    xaxis: { title: '' },
+    showlegend: false
+  }), PLOTLY_CONFIG);
+}
+
+function initQ4() {
+  // Chart 1: Bronze 2016 deviation by state/network
+  const bStates = [...new Set(Q4_BRONZE_2016.map(d => d[0]))];
+  const bTiers  = ['large', 'medium', 'small'];
+  const bTraces = bTiers.map(tier => {
+    const pts = Q4_BRONZE_2016.filter(d => d[1] === tier);
+    return {
+      name: tier.charAt(0).toUpperCase() + tier.slice(1),
+      type: 'bar',
+      x: pts.map(d => d[0]),
+      y: pts.map(d => d[2]),
+      marker: { color: COLORS[tier], opacity: 0.85 }
+    };
+  });
+  Plotly.newPlot('chart-q4-bronze', bTraces, layout({
+    barmode: 'group', height: 300,
+    yaxis: { title: 'Desvio vs. Média Estadual (%)', ticksuffix: '%',
+      zeroline: true, zerolinecolor: '#8892a4', zerolinewidth: 2 },
+    xaxis: { title: 'Estado' },
+    legend: { orientation: 'h', y: -0.3 },
+    shapes: [{ type: 'line', x0: -0.5, x1: 17.5, y0: 0, y1: 0,
+      line: { color: '#8892a4', width: 1, dash: 'dot' } }]
+  }), PLOTLY_CONFIG);
+
+  // Chart 2: Silver 2016
+  const sTraces = bTiers.map(tier => {
+    const pts = Q4_SILVER_2016.filter(d => d[1] === tier);
+    return {
+      name: tier.charAt(0).toUpperCase() + tier.slice(1),
+      type: 'bar',
+      x: pts.map(d => d[0]),
+      y: pts.map(d => d[2]),
+      marker: { color: COLORS[tier], opacity: 0.85 }
+    };
+  });
+  Plotly.newPlot('chart-q4-silver', sTraces, layout({
+    barmode: 'group', height: 300,
+    yaxis: { title: 'Desvio vs. Média Estadual (%)', ticksuffix: '%',
+      zeroline: true, zerolinecolor: '#8892a4', zerolinewidth: 2 },
+    xaxis: { title: 'Estado' },
+    legend: { orientation: 'h', y: -0.3 },
+    shapes: [{ type: 'line', x0: -0.5, x1: 17.5, y0: 0, y1: 0,
+      line: { color: '#8892a4', width: 1, dash: 'dot' } }]
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: NJ within-state comparison (has both large and medium data)
+  const compTraces = [
+    {
+      name: 'Rede Grande', type: 'bar',
+      x: Q4_NJ_COMPARISON.metals,
+      y: Q4_NJ_COMPARISON.large,
+      marker: { color: COLORS.large },
+      text: Q4_NJ_COMPARISON.large.map(v => '$' + v), textposition: 'outside'
+    },
+    {
+      name: 'Rede Média', type: 'bar',
+      x: Q4_NJ_COMPARISON.metals,
+      y: Q4_NJ_COMPARISON.medium,
+      marker: { color: COLORS.medium },
+      text: Q4_NJ_COMPARISON.medium.map(v => '$' + v), textposition: 'outside'
+    }
+  ];
+  Plotly.newPlot('chart-q4-comparison', compTraces, layout({
+    barmode: 'group', height: 300,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$' },
+    xaxis: { title: 'Nível Metálico — Nova Jersey (2016)' },
+    legend: { orientation: 'h', y: -0.25 }
+  }), PLOTLY_CONFIG);
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+const chartsInitialized = {};
+
+function showTab(tabId) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+
+  if (!chartsInitialized[tabId]) {
+    chartsInitialized[tabId] = true;
+    if (tabId === 'overview') initOverview();
+    if (tabId === 'q1')       initQ1();
+    if (tabId === 'q2')       initQ2();
+    if (tabId === 'q3')       initQ3();
+    if (tabId === 'q4')       initQ4();
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => showTab(btn.dataset.tab));
+});
+
+// Init first tab
+showTab('overview');
+</script>
+</body>
+</html>
