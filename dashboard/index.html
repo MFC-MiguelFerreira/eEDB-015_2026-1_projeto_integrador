@@ -261,6 +261,15 @@
       <div class="insight"><strong>Surpresa 2016:</strong> A coinsurance de <strong>Gold e Silver aumentou</strong> entre 2015 e 2016 — Gold passou de 7,1% para 13,9%. Issuers transferiram risco para o paciente nos tiers intermediários. Platinum manteve coinsurance controlada, tornando-se mais previsível para tratamentos recorrentes.</div>
     </div>
   </div>
+
+  <hr class="section-divider">
+
+  <div class="chart-card">
+    <h3>Franquia, Prêmio Mensal e Teto de Gastos por Nível Metálico</h3>
+    <div class="chart-subtitle">Composição do risco financeiro do paciente: franquia médica (MEHB) + franquia de medicamentos (DEHB) + prêmio mensal individual empilhados em barra, com a linha pontilhada indicando o MOOP (teto máximo de desembolso anual). Médias calculadas sobre todos os planos da base federal (2014–2016). O prêmio mostrado é o valor <em>mensal</em> — evidenciando que, para Bronze, o custo inesperado anteio da cobertura domina o gasto total.</div>
+    <div id="chart-q1-financial"></div>
+    <div class="insight"><strong>O custo real do plano "barato":</strong> A franquia Bronze ($4.090 médica + $360 medicamentos = <strong>$4.450/ano</strong>) consome quase todo o MOOP de <strong>$5.208</strong> — o paciente oncológico que inicia quimioterapia atinge esse teto já nas primeiras sessões. No Platinum, a franquia total é apenas <strong>$373</strong> e o MOOP cai para <strong>$1.450</strong>, tornando a exposição financeira anual muito mais controlada e previsível.</div>
+  </div>
 </div>
 
 <!-- Q2 -->
@@ -527,6 +536,14 @@ const Q1_COINSURANCE = {
   metals: ['Bronze', 'Silver', 'Gold', 'Platinum'],
   '2015': [1.7, 10.9, 7.1, 4.9],
   '2016': [4.3,  8.2, 13.9, 11.5]
+};
+
+const Q1_FINANCIAL = {
+  metals:       ['Bronze', 'Silver', 'Gold', 'Platinum'],
+  med_ded:      [4090, 2050, 1093, 312],
+  drug_ded:     [360,  163,  72,   61],
+  monthly_rate: [249,  289,  339,  440],
+  moop:         [5208, 2948, 2102, 1450]
 };
 
 // ── Q2 DATA ──
@@ -860,7 +877,7 @@ function initQ1() {
     legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
   }), PLOTLY_CONFIG);
 
-  // Chart 4: Coinsurance line chart
+  // Chart 4: Coinsurance bar chart
   Plotly.newPlot('chart-q1-coinsurance', [
     {
       name: '2015', type: 'bar',
@@ -883,6 +900,62 @@ function initQ1() {
     yaxis: { title: 'Coinsurance Médio (%)', ticksuffix: '%' },
     xaxis: { title: 'Nível Metálico' },
     legend: { orientation: 'h', y: -0.25 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 5: Integrated financial exposure — stacked bars + MOOP line
+  const fin = Q1_FINANCIAL;
+  const totalDed = fin.med_ded.map((v, i) => v + fin.drug_ded[i]);
+
+  Plotly.newPlot('chart-q1-financial', [
+    {
+      name: 'Franquia Médica (MEHB)',
+      type: 'bar',
+      x: fin.metals,
+      y: fin.med_ded,
+      marker: { color: '#3b82f6', opacity: 0.92 },
+      hovertemplate: '<b>%{x}</b><br>Franquia Médica: $%{y:,.0f}<extra></extra>'
+    },
+    {
+      name: 'Franquia Medicamentos (DEHB)',
+      type: 'bar',
+      x: fin.metals,
+      y: fin.drug_ded,
+      marker: { color: '#f97316', opacity: 0.92 },
+      hovertemplate: '<b>%{x}</b><br>Franquia Medicamentos: $%{y:,.0f}<br>Total Franquia: $%{customdata:,.0f}<extra></extra>',
+      customdata: totalDed
+    },
+    {
+      name: 'Prêmio Mensal (Individual Rate)',
+      type: 'bar',
+      x: fin.metals,
+      y: fin.monthly_rate,
+      marker: { color: '#ef4444', opacity: 0.88 },
+      hovertemplate: '<b>%{x}</b><br>Prêmio Mensal: $%{y:,.0f}<extra></extra>'
+    },
+    {
+      name: 'MOOP — Teto de Desembolso Anual',
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: fin.metals,
+      y: fin.moop,
+      line: { dash: 'dot', color: '#a78bfa', width: 2.5 },
+      marker: { symbol: 'diamond', size: 10, color: '#a78bfa', line: { color: '#fff', width: 1.5 } },
+      hovertemplate: '<b>%{x}</b><br>MOOP: $%{y:,.0f}<extra></extra>'
+    }
+  ], layout({
+    barmode: 'stack',
+    height: 380,
+    yaxis: { title: 'Valor em USD', tickprefix: '$', tickformat: ',.0f' },
+    xaxis: { title: 'Nível Metálico' },
+    legend: { orientation: 'h', y: -0.28, font: { size: 11 } },
+    annotations: fin.metals.map((m, i) => ({
+      x: m,
+      y: fin.med_ded[i] + fin.drug_ded[i] + fin.monthly_rate[i] + 120,
+      text: '$' + (fin.med_ded[i] + fin.drug_ded[i]).toLocaleString(),
+      showarrow: false,
+      font: { size: 10, color: '#94a3b8' },
+      xanchor: 'center'
+    }))
   }), PLOTLY_CONFIG);
 }
 
