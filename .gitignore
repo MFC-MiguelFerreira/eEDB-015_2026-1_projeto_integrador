@@ -1,5 +1,5 @@
 # Exports locais (CSVs para Power BI) — nunca commitar
-data/gold_exports/
+data/exports/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -160,7 +160,7 @@ volume/
 .ropeproject
 
 # mkdocs documentation
-/site
+# /site
 
 # mypy
 .mypy_cache/
