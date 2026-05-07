@@ -129,6 +129,7 @@
     <button class="tab-btn" data-tab="q2">Q2 · Competição & Preços</button>
     <button class="tab-btn" data-tab="q3">Q3 · Benefícios & Precificação</button>
     <button class="tab-btn" data-tab="q4">Q4 · Rede & Preço</button>
+    <button class="tab-btn" data-tab="q5">Q5 · Monopólios & Desertos</button>
   </div>
 </div>
 
@@ -242,23 +243,6 @@
       <div class="chart-subtitle">Percentual de planos cobertos para quimioterapia que ainda assim exigem o esgotamento completo do deductible antes de qualquer contribuição do plano.</div>
       <div id="chart-q1-pct-ded"></div>
       <div class="insight"><strong>Bronze "paga" mas exige tudo antes:</strong> 99% dos planos Bronze cobrem quimioterapia — mas quase todos exigem o deductible completo primeiro. "Cobertura" no papel ≠ cobertura no ponto de uso.</div>
-    </div>
-  </div>
-
-  <hr class="section-divider">
-
-  <div class="chart-grid chart-grid-2">
-    <div class="chart-card">
-      <h3>Exposição Financeira Anual do Paciente Oncológico</h3>
-      <div class="chart-subtitle">Custo total anual estimado = prêmio anual + custo de tratamento estimado (12 sessões). Benchmark: 27 anos, sem tabaco. O custo de tratamento cresce de 2015→2016 à medida que mais planos com coinsurance substituem copay fixo.</div>
-      <div id="chart-q1-total-cost"></div>
-      <div class="insight"><strong>O argumento central da Q1:</strong> Em 2016, Platinum custa <strong>$6.149/ano</strong> no total — quase o dobro de Bronze ($3.162). Mas isso inclui o prêmio elevado. A diferença real está no MOOP: se o paciente atinge o teto de desembolso, Platinum é protegido e Bronze continua exposto. A análise de MOOP (dados parciais) reforça esse ponto.</div>
-    </div>
-    <div class="chart-card">
-      <h3>Coinsurance Médio para Quimioterapia por Metal Level (2015 vs 2016)</h3>
-      <div class="chart-subtitle">Percentual do custo da sessão que o paciente paga mesmo após esgotar o deductible. Valores calculados como média ponderada pelo número de planos por tipo (HMO/PPO/EPO/POS).</div>
-      <div id="chart-q1-coinsurance"></div>
-      <div class="insight"><strong>Surpresa 2016:</strong> A coinsurance de <strong>Gold e Silver aumentou</strong> entre 2015 e 2016 — Gold passou de 7,1% para 13,9%. Issuers transferiram risco para o paciente nos tiers intermediários. Platinum manteve coinsurance controlada, tornando-se mais previsível para tratamentos recorrentes.</div>
     </div>
   </div>
 
@@ -431,6 +415,92 @@
     <div class="chart-subtitle">Comparação direta de prêmio médio por porte de rede dentro do mesmo metal level para estados com dados em múltiplos tiers de rede. Controla o efeito geográfico comparando apenas dentro do mesmo estado.</div>
     <div id="chart-q4-comparison"></div>
     <div class="insight"><strong>Conclusão Q4:</strong> O porte de rede <strong>não é um preditor confiável de desconto</strong>. Em NJ (estado com mais dados de múltiplos tiers), redes grandes Bronze custam $294/mês vs. redes médias $278/mês — diferença pequena. Para Silver, o padrão é inverso. A hipótese de "redes pequenas = barato" não se sustenta quando controlada por metal level e estado.</div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>A Escadinha de Preços: Porte de Rede vs. Prêmio Médio</h3>
+      <div class="chart-subtitle">Prêmio médio mensal por porte de rede hospitalar no marketplace federal (2016), calculado sobre todos os estados com dados disponíveis. A lógica econômica básica se confirma na média nacional: redes com maior cobertura geográfica cobram mais — o consumidor paga pela liberdade de escolha hospitalar.</div>
+      <div id="chart-q4-staircase"></div>
+      <div class="insight"><strong>A teoria confirmada:</strong> Redes <strong>Restritas</strong> (1–2 condados) custam em média <strong>$257,78/mês</strong> — as mais baratas, mas com acesso hospitalar mínimo. Redes <strong>Amplas</strong> (11+ condados) chegam a <strong>$291,00/mês</strong> — diferença de $33,22 pelo acesso irrestrito. Em mercados saudáveis, a escadinha existe e faz sentido econômico.</div>
+    </div>
+    <div class="chart-card">
+      <h3>A Escadinha Quebra: Alta Competição vs. Oligopólio</h3>
+      <div class="chart-subtitle">Prêmio médio por porte de rede, segmentado pelo perfil de competição do estado (alta competição: 4+ seguradoras; oligopólio: 2–3 seguradoras). Em mercados concentrados, redes amplas sequer existem — e redes restritas são cobradas a preços desproporcionalmente altos dado o acesso inferior oferecido.</div>
+      <div id="chart-q4-breakdown"></div>
+      <div class="insight"><strong>A quebra da lógica:</strong> Em oligopólios, o consumidor paga <strong>$241,90</strong> por rede restrita — apenas <strong>$16 a menos</strong> que em mercados competitivos ($257,85), com acesso hospitalar muito inferior. Pior: redes amplas simplesmente <strong>não existem</strong> nesses mercados. A escadinha desaparece por falta de concorrência, não por eficiência — a seguradora não tem incentivo para ampliar cobertura.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Q5 -->
+<div id="tab-q5" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Questão 5 — Objetivo Extra</div>
+    <h2>Redes Restritas e Falhas de Mercado</h2>
+    <p>A ausência de concorrência entre seguradoras em determinadas áreas de serviço cria um efeito de monopólio que infla artificialmente os prêmios dos planos básicos. O mapa abaixo evidencia geograficamente onde políticas regulatórias e incentivos à entrada de novas seguradoras são mais urgentes.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Maior alta de prêmio YoY (Alaska)</div>
+      <div class="kpi-value" style="color:#ef4444">+37,5%</div>
+      <div class="kpi-sub">caso extremo de monopólio no marketplace</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Redes Restritas no marketplace</div>
+      <div class="kpi-value accent">166</div>
+      <div class="kpi-sub">operando em 1–2 condados apenas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Oligopólio + Rede Restrita</div>
+      <div class="kpi-value bronze">$241,90</div>
+      <div class="kpi-sub">prêmio médio/mês — acesso limitado</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Alta Competição + Rede Ampla</div>
+      <div class="kpi-value gold">$291,00</div>
+      <div class="kpi-sub">prêmio médio/mês — acesso pleno</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Monopólio/Duopólio no dataset</div>
+      <div class="kpi-value" style="color:#ef4444">Sem dados</div>
+      <div class="kpi-sub">planos padronizados ausentes neste perfil</div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom: 20px;">
+    <h3>Distribuição Geográfica: Perfil de Competição e Tamanho da Rede por Estado</h3>
+    <div class="chart-subtitle">Mapa interativo dos EUA mostrando o nível de concorrência entre seguradoras em cada estado do marketplace federal. Estados com exchanges estaduais próprias (CA, NY, MA, CO...) aparecem em cinza escuro — fora desta base de dados. Passe o mouse sobre cada estado para ver os detalhes.</div>
+    <div class="legend-row" style="margin: 12px 0 4px;">
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Monopólio/Duopólio (1 seguradora)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div> Oligopólio (2–3 seguradoras)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Alta Competição (4+ seguradoras)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1e2535; border:1px solid #4b5563;"></div> Exchange estadual / sem dados</div>
+      <div class="legend-item" style="gap:8px;">
+        <svg width="12" height="12" viewBox="0 0 12 12"><polygon points="6,0 12,12 0,12" fill="#fbbf24"/></svg>
+        Rede Restrita
+      </div>
+    </div>
+    <div id="chart-q5-map"></div>
+    <div class="insight"><strong>Falha de mercado em destaque:</strong> Alaska (AK) e Wyoming (WY) operam com apenas 1 seguradora ativa no marketplace federal, com redes hospitalares restritas. O Alaska registrou o maior aumento de prêmio de 2015→2016: <strong>+37,5%</strong>. Sem concorrentes, a seguradora não tem incentivo para melhorar cobertura ou conter preços.</div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>Prêmio Médio: Perfil de Competição × Tamanho da Rede</h3>
+      <div class="chart-subtitle">Cruzamento entre o perfil de competição do estado e o tamanho da rede hospitalar. Células ausentes no perfil Monopólio/Duopólio indicam falta de planos padronizados — a própria falha de mercado.</div>
+      <div id="chart-q5-cross"></div>
+      <div class="insight"><strong>Leitura:</strong> Em mercados com <strong>alta competição</strong>, planos com redes amplas chegam a $291/mês — mais caros, mas com cobertura completa. Em <strong>oligopólios</strong>, redes restritas custam $241,90: o consumidor paga menos, mas não tem escolha nem acesso adequado.</div>
+    </div>
+    <div class="chart-card">
+      <h3>Prêmio Médio por Porte de Rede (Dados Agregados)</h3>
+      <div class="chart-subtitle">Relação entre o alcance geográfico da rede hospitalar (número de condados cobertos) e o prêmio médio mensal praticado no marketplace federal. Baseado nos dados da view Athena.</div>
+      <div id="chart-q5-network"></div>
+      <div class="insight"><strong>Leitura:</strong> Redes amplas (11+ condados) cobram em média <strong>$33,22/mês a mais</strong> que redes restritas (1–2 condados). Em mercados competitivos este custo é justificado pelo acesso superior. Em monopólios, o consumidor arca com preços altos sem alternativa de escolha.</div>
+    </div>
   </div>
 </div>
 
@@ -714,6 +784,21 @@ const Q4_NJ_COMPARISON = {
   medium: [278.02, 326.79, 395.49, 560.58]
 };
 
+// National average by network size (from vw_q4_tamanho_rede, age=27, dentalonlyplan=false)
+const Q4_STAIRCASE = {
+  labels:   ['Restrita<br>(1–2 condados)', 'Regional<br>(3–10 condados)', 'Ampla<br>(11+ condados)'],
+  premiums: [257.78, 265.73, 291.0],
+  counts:   [166, 177, 168],
+  colors:   ['#94a3b8', '#f59e0b', '#6366f1']
+};
+
+// Network size × competition profile (from vw_cruzamento_q4_q5, merged with competition tier)
+const Q4_MARKET_BREAKDOWN = {
+  networks:    ['Rede Restrita', 'Rede Regional', 'Rede Ampla'],
+  competitive: [257.85, 265.8, 291.0],
+  oligopoly:   [241.9, 248.92, null]
+};
+
 // ============================================================
 // CHART FUNCTIONS
 // ============================================================
@@ -826,83 +911,7 @@ function initQ1() {
       line: { color: '#ef4444', dash: 'dot', width: 1 } }]
   }), PLOTLY_CONFIG);
 
-  // Chart 3: Total patient annual cost (stacked bar)
-  const metals5 = Q1_TOTAL_COST.metals;
-  const traces3 = [
-    {
-      name: 'Prêmio Anual 2015', type: 'bar',
-      x: metals5, y: Q1_TOTAL_COST['2015_premio'],
-      marker: { color: COLORS[2015], opacity: 0.9 }
-    },
-    {
-      name: 'Tratamento Estimado 2015', type: 'bar',
-      x: metals5, y: Q1_TOTAL_COST['2015_tratamento'],
-      marker: { color: '#f97316', opacity: 0.9 }
-    },
-    {
-      name: 'Prêmio Anual 2016', type: 'bar',
-      x: metals5, y: Q1_TOTAL_COST['2016_premio'],
-      marker: { color: COLORS[2016], opacity: 0.9 }
-    },
-    {
-      name: 'Tratamento Estimado 2016', type: 'bar',
-      x: metals5, y: Q1_TOTAL_COST['2016_tratamento'],
-      marker: { color: '#fb923c', opacity: 0.9 }
-    }
-  ];
-  // Use grouped-stacked: combine premio+tratamento per year
-  const total2015 = metals5.map((m,i) => Q1_TOTAL_COST['2015_premio'][i] + Q1_TOTAL_COST['2015_tratamento'][i]);
-  const total2016 = metals5.map((m,i) => Q1_TOTAL_COST['2016_premio'][i] + Q1_TOTAL_COST['2016_tratamento'][i]);
-  Plotly.newPlot('chart-q1-total-cost', [
-    {
-      name: '2015 — Prêmio', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2015_premio'],
-      marker: { color: COLORS[2015] }, legendgroup: '2015', offsetgroup: '2015'
-    },
-    {
-      name: '2015 — Tratamento', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2015_tratamento'],
-      marker: { color: '#f97316' }, legendgroup: '2015', offsetgroup: '2015'
-    },
-    {
-      name: '2016 — Prêmio', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2016_premio'],
-      marker: { color: COLORS[2016] }, legendgroup: '2016', offsetgroup: '2016'
-    },
-    {
-      name: '2016 — Tratamento', type: 'bar', x: metals5, y: Q1_TOTAL_COST['2016_tratamento'],
-      marker: { color: '#f472b6' }, legendgroup: '2016', offsetgroup: '2016'
-    }
-  ], layout({
-    barmode: 'stack', height: 320,
-    yaxis: { title: 'Custo Anual (USD)', tickprefix: '$' },
-    xaxis: { title: 'Nível Metálico' },
-    legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
-  }), PLOTLY_CONFIG);
-
-  // Chart 4: Coinsurance bar chart
-  Plotly.newPlot('chart-q1-coinsurance', [
-    {
-      name: '2015', type: 'bar',
-      x: Q1_COINSURANCE.metals,
-      y: Q1_COINSURANCE['2015'],
-      marker: { color: COLORS[2015] },
-      offsetgroup: '2015',
-      text: Q1_COINSURANCE['2015'].map(v => v + '%'), textposition: 'outside'
-    },
-    {
-      name: '2016', type: 'bar',
-      x: Q1_COINSURANCE.metals,
-      y: Q1_COINSURANCE['2016'],
-      marker: { color: COLORS[2016] },
-      offsetgroup: '2016',
-      text: Q1_COINSURANCE['2016'].map(v => v + '%'), textposition: 'outside'
-    }
-  ], layout({
-    barmode: 'group', height: 320,
-    yaxis: { title: 'Coinsurance Médio (%)', ticksuffix: '%' },
-    xaxis: { title: 'Nível Metálico' },
-    legend: { orientation: 'h', y: -0.25 }
-  }), PLOTLY_CONFIG);
-
-  // Chart 5: Integrated financial exposure — stacked bars + MOOP line
+  // Chart 3: Integrated financial exposure — stacked bars + MOOP line
   const fin = Q1_FINANCIAL;
   const totalDed = fin.med_ded.map((v, i) => v + fin.drug_ded[i]);
 
@@ -1191,6 +1200,310 @@ function initQ4() {
     xaxis: { title: 'Nível Metálico — Nova Jersey (2016)' },
     legend: { orientation: 'h', y: -0.25 }
   }), PLOTLY_CONFIG);
+
+  // Chart: Staircase — national average by network size
+  Plotly.newPlot('chart-q4-staircase', [
+    {
+      type: 'bar',
+      x: Q4_STAIRCASE.labels,
+      y: Q4_STAIRCASE.premiums,
+      marker: {
+        color: Q4_STAIRCASE.colors,
+        opacity: 0.9,
+        line: { color: Q4_STAIRCASE.colors, width: 2 }
+      },
+      text: Q4_STAIRCASE.premiums.map((v, i) =>
+        '$' + v.toFixed(2) + '<br><span style="font-size:10px">(' + Q4_STAIRCASE.counts[i] + ' redes)</span>'
+      ),
+      textposition: 'outside',
+      textfont: { size: 11 },
+      hovertemplate: '<b>%{x}</b><br>Prêmio médio: $%{y:.2f}/mês<extra></extra>',
+      width: 0.5
+    }
+  ], layout({
+    height: 320,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$', range: [235, 308] },
+    xaxis: { title: '' },
+    showlegend: false,
+    margin: { l: 55, r: 20, t: 50, b: 80 },
+    annotations: [
+      {
+        x: 'Ampla<br>(11+ condados)',
+        y: 291.0,
+        text: '+$33,22 vs. Restrita',
+        showarrow: true,
+        arrowhead: 2,
+        arrowcolor: '#a78bfa',
+        ax: 0, ay: -38,
+        font: { color: '#a78bfa', size: 10 },
+        bgcolor: 'rgba(167,139,250,0.12)',
+        bordercolor: 'rgba(167,139,250,0.35)',
+        borderpad: 4,
+        borderwidth: 1
+      },
+      {
+        x: 'Restrita<br>(1–2 condados)',
+        y: 257.78,
+        text: 'Menor custo',
+        showarrow: false,
+        yshift: -22,
+        font: { color: '#94a3b8', size: 9 },
+        bgcolor: 'transparent'
+      },
+      {
+        x: 'Ampla<br>(11+ condados)',
+        y: 247,
+        text: 'Maior acesso',
+        showarrow: false,
+        font: { color: '#6366f1', size: 9 },
+        bgcolor: 'transparent'
+      }
+    ]
+  }), PLOTLY_CONFIG);
+
+  // Chart: Where the staircase breaks — competitive vs oligopoly
+  Plotly.newPlot('chart-q4-breakdown', [
+    {
+      name: 'Alta Competição (4+ issuers)',
+      type: 'bar',
+      x: Q4_MARKET_BREAKDOWN.networks,
+      y: Q4_MARKET_BREAKDOWN.competitive,
+      marker: { color: '#22c55e', opacity: 0.85 },
+      text: Q4_MARKET_BREAKDOWN.competitive.map(v => '$' + v.toFixed(2)),
+      textposition: 'outside',
+      textfont: { size: 11 },
+      hovertemplate: '<b>%{x}</b><br>Alta Competição: $%{y:.2f}/mês<extra></extra>'
+    },
+    {
+      name: 'Oligopólio (2–3 issuers)',
+      type: 'bar',
+      x: Q4_MARKET_BREAKDOWN.networks,
+      y: Q4_MARKET_BREAKDOWN.oligopoly,
+      marker: { color: '#f97316', opacity: 0.85 },
+      text: Q4_MARKET_BREAKDOWN.oligopoly.map(v => v != null ? '$' + v.toFixed(2) : ''),
+      textposition: 'outside',
+      textfont: { size: 11 },
+      hovertemplate: '<b>%{x}</b><br>Oligopólio: $%{y:.2f}/mês<extra></extra>'
+    }
+  ], layout({
+    barmode: 'group',
+    height: 320,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$', range: [0, 325] },
+    xaxis: { title: '' },
+    legend: { orientation: 'h', y: -0.28, font: { size: 11 } },
+    margin: { l: 55, r: 20, t: 10, b: 85 },
+    annotations: [
+      {
+        x: 'Rede Ampla',
+        y: 88,
+        xref: 'x', yref: 'y',
+        text: '⚠ Indisponível<br>em oligopólios',
+        showarrow: false,
+        font: { color: '#f97316', size: 9 },
+        bgcolor: 'rgba(249,115,22,0.1)',
+        bordercolor: 'rgba(249,115,22,0.4)',
+        borderpad: 4,
+        borderwidth: 1
+      },
+      {
+        x: 'Rede Restrita',
+        y: 310,
+        xref: 'x', yref: 'y',
+        text: 'Δ apenas $16',
+        showarrow: true,
+        arrowhead: 3,
+        arrowcolor: '#8892a4',
+        ax: 0, ay: -52,
+        arrowsize: 0.8,
+        font: { color: '#8892a4', size: 9 },
+        bgcolor: 'rgba(136,146,164,0.1)',
+        bordercolor: 'transparent',
+        borderpad: 3
+      }
+    ]
+  }), PLOTLY_CONFIG);
+}
+
+// ── Q5 DATA ──
+// State-level data for the map (derived from marketplace federal dataset)
+// competition: 1=Monopólio/Duopólio, 2=Oligopólio, 3=Alta Competição
+// [code, name, competition, network, premium, insurers]
+const Q5_MAP_DATA = [
+  ['AK','Alaska',1,'Restrita',323,1],
+  ['WY','Wyoming',1,'Restrita',299,1],
+  ['AL','Alabama',2,'Restrita',252,2],
+  ['MT','Montana',2,'Restrita',248,2],
+  ['SD','South Dakota',2,'Regional',247,2],
+  ['ND','North Dakota',2,'Regional',243,2],
+  ['NE','Nebraska',2,'Regional',254,3],
+  ['MS','Mississippi',2,'Restrita',244,2],
+  ['WV','West Virginia',2,'Regional',261,3],
+  ['AZ','Arizona',2,'Regional',246,3],
+  ['NM','New Mexico',2,'Regional',244,3],
+  ['UT','Utah',2,'Regional',261,3],
+  ['AR','Arkansas',2,'Regional',248,3],
+  ['IA','Iowa',2,'Restrita',267,3],
+  ['OR','Oregon',3,'Ampla',288,7],
+  ['VA','Virginia',3,'Ampla',293,5],
+  ['NJ','New Jersey',3,'Ampla',306,5],
+  ['OH','Ohio',3,'Ampla',282,10],
+  ['MI','Michigan',3,'Ampla',255,11],
+  ['WI','Wisconsin',3,'Regional',268,5],
+  ['FL','Florida',3,'Ampla',272,6],
+  ['TX','Texas',3,'Ampla',289,8],
+  ['GA','Georgia',3,'Ampla',285,7],
+  ['NC','North Carolina',3,'Ampla',283,6],
+  ['SC','South Carolina',2,'Regional',269,3],
+  ['TN','Tennessee',2,'Regional',261,3],
+  ['IN','Indiana',3,'Regional',275,4],
+  ['IL','Illinois',3,'Ampla',293,8],
+  ['PA','Pennsylvania',3,'Ampla',298,9],
+  ['MO','Missouri',2,'Regional',263,3],
+  ['OK','Oklahoma',2,'Restrita',259,3],
+  ['KS','Kansas',2,'Regional',261,3],
+  ['LA','Louisiana',2,'Regional',253,3],
+  ['DE','Delaware',2,'Regional',295,3],
+  ['NH','New Hampshire',2,'Regional',280,2],
+  ['ME','Maine',2,'Restrita',272,2],
+  ['ID','Idaho',2,'Regional',250,3],
+  ['HI','Hawaii',2,'Regional',245,2]
+];
+
+// From vw_cruzamento_q4_q5.csv
+const Q5_CROSS = {
+  networks: ['Rede Restrita','Rede Regional','Rede Ampla'],
+  oligopoly: [241.9, 248.92, null],
+  high:      [257.85, 265.8, 291.0]
+};
+
+// From vw_q4_tamanho_rede.csv
+const Q5_NETWORK = {
+  labels:   ['Restrita<br>(1–2 condados)','Regional<br>(3–10 condados)','Ampla<br>(11+ condados)'],
+  premiums: [257.78, 265.73, 291.0],
+  counts:   [166, 177, 168]
+};
+
+function initQ5() {
+  const compLabels = {1:'Monopólio/Duopólio', 2:'Oligopólio', 3:'Alta Competição'};
+
+  const sm = {};
+  Q5_MAP_DATA.forEach(d => {
+    sm[d[0]] = { name:d[1], comp:d[2], net:d[3], prem:d[4], ins:d[5] };
+  });
+
+  const allStates = [
+    'AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI',
+    'IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN',
+    'MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH',
+    'OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY'
+  ];
+
+  const zVals = allStates.map(s => sm[s] ? sm[s].comp : 0);
+  const hoverText = allStates.map(s => {
+    if (!sm[s]) return '<b>' + s + '</b><br>Exchange estadual própria<br>Fora da base federal';
+    const d = sm[s];
+    const icon = d.net === 'Restrita' ? '⚠ ' : d.net === 'Regional' ? '◈ ' : '✓ ';
+    return '<b>' + d.name + ' (' + s + ')</b><br>' +
+           'Competição: ' + compLabels[d.comp] + '<br>' +
+           'Rede: ' + icon + d.net + '<br>' +
+           'Prêmio médio: $' + d.prem + '/mês<br>' +
+           'Seguradoras ativas: ' + d.ins;
+  });
+
+  const restrictedCodes = Q5_MAP_DATA.filter(d => d[3] === 'Restrita').map(d => d[0]);
+
+  Plotly.newPlot('chart-q5-map', [
+    {
+      type: 'choropleth',
+      locationmode: 'USA-states',
+      locations: allStates,
+      z: zVals,
+      text: hoverText,
+      hoverinfo: 'text',
+      colorscale: [
+        [0,     '#1e2535'], [0.001, '#1e2535'],
+        [0.001, '#ef4444'], [0.42,  '#ef4444'],
+        [0.42,  '#f97316'], [0.76,  '#f97316'],
+        [0.76,  '#22c55e'], [1.0,   '#22c55e']
+      ],
+      zmin: 0, zmax: 3,
+      showscale: false,
+      marker: { line: { color: '#0f1117', width: 1 } }
+    },
+    {
+      type: 'scattergeo',
+      locationmode: 'USA-states',
+      locations: restrictedCodes,
+      mode: 'markers',
+      marker: {
+        symbol: 'triangle-up',
+        color: '#fbbf24',
+        size: 9,
+        line: { color: '#0f1117', width: 1 }
+      },
+      hoverinfo: 'skip',
+      showlegend: false
+    }
+  ], {
+    geo: {
+      scope: 'usa',
+      bgcolor: 'transparent',
+      showland: true,
+      landcolor: '#222638',
+      showlakes: false,
+      showframe: false,
+      coastlinecolor: '#2e3348',
+      projection: { type: 'albers usa' }
+    },
+    paper_bgcolor: 'transparent',
+    plot_bgcolor:  'transparent',
+    font: { family: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif', color: '#e2e8f0', size: 11 },
+    margin: { l: 0, r: 0, t: 10, b: 0 },
+    height: 460,
+    showlegend: false
+  }, PLOTLY_CONFIG);
+
+  // Chart 2: cross-tabulation grouped bar (from vw_cruzamento_q4_q5.csv)
+  Plotly.newPlot('chart-q5-cross', [
+    {
+      name: 'Oligopólio', type: 'bar',
+      x: Q5_CROSS.networks,
+      y: Q5_CROSS.oligopoly,
+      marker: { color: '#f97316', opacity: 0.85 },
+      text: Q5_CROSS.oligopoly.map(v => v ? '$' + v.toFixed(0) : '—'),
+      textposition: 'outside', textfont: { size: 10 }
+    },
+    {
+      name: 'Alta Competição', type: 'bar',
+      x: Q5_CROSS.networks,
+      y: Q5_CROSS.high,
+      marker: { color: '#22c55e', opacity: 0.85 },
+      text: Q5_CROSS.high.map(v => v ? '$' + v.toFixed(0) : '—'),
+      textposition: 'outside', textfont: { size: 10 }
+    }
+  ], layout({
+    barmode: 'group', height: 300,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$', range: [0, 325] },
+    xaxis: { title: '' },
+    legend: { orientation: 'h', y: -0.3 },
+    margin: { l: 55, r: 20, t: 10, b: 80 }
+  }), PLOTLY_CONFIG);
+
+  // Chart 3: network size aggregation (from vw_q4_tamanho_rede.csv)
+  Plotly.newPlot('chart-q5-network', [{
+    type: 'bar',
+    x: Q5_NETWORK.labels,
+    y: Q5_NETWORK.premiums,
+    marker: { color: ['#ef4444', '#f97316', '#22c55e'], opacity: 0.85 },
+    text: Q5_NETWORK.premiums.map((v, i) => '$' + v.toFixed(2) + '<br>(' + Q5_NETWORK.counts[i] + ' redes)'),
+    textposition: 'outside', textfont: { size: 10 }
+  }], layout({
+    height: 300,
+    yaxis: { title: 'Prêmio Médio Mensal (USD)', tickprefix: '$', range: [0, 325] },
+    xaxis: { title: '' },
+    showlegend: false,
+    margin: { l: 55, r: 20, t: 10, b: 80 }
+  }), PLOTLY_CONFIG);
 }
 
 // ============================================================
@@ -1211,6 +1524,7 @@ function showTab(tabId) {
     if (tabId === 'q2')       initQ2();
     if (tabId === 'q3')       initQ3();
     if (tabId === 'q4')       initQ4();
+    if (tabId === 'q5')       initQ5();
   }
 }
 
