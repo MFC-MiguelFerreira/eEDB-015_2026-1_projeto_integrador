@@ -1,6 +1,6 @@
 # scripts/ — Notebooks de Desenvolvimento e Documentação
 
-Esta pasta contém notebooks Jupyter usados para **desenvolvimento e validação** dos scripts ETL do projeto, além de documentos de design das camadas do Data Lake. Os notebooks são projetados para rodar no ambiente local do Dev Container, sem custos de Glue no AWS Academy.
+Esta pasta contém notebooks Jupyter usados para **desenvolvimento e validação** dos scripts ETL do projeto, além de documentos de design das camadas do Data Lake e relatórios de entrega. Os notebooks são projetados para rodar no ambiente local do Dev Container, sem custos de Glue no AWS Academy.
 
 ## Relação com os artefatos de produção
 
@@ -9,9 +9,9 @@ scripts/*.ipynb         →   (validado)   →   src/glue_jobs/*.py
   (desenvolvimento                           (versão final para
    e teste local)                             deploy no AWS Glue)
 
-scripts/*.ipynb         →   (exploração)  →   src/.sql/
-  (análise Silver)                            (queries Gold prontas
-                                               para orquestração)
+scripts/*.ipynb         →   (exploração)  →   src/.sql/analytics/
+  (análise Silver/Gold)                       (queries analíticas Q1–Q4
+                                               organizadas por questão)
 ```
 
 Cada notebook ETL corresponde a um Glue Job. Uma vez que a lógica está validada, o código é adaptado para script `.py` em `src/glue_jobs/`, substituindo as variáveis locais pelos parâmetros do job (`getResolvedOptions`).
@@ -22,8 +22,9 @@ Cada notebook ETL corresponde a um Glue Job. Uma vez que a lógica está validad
 |---|---|---|
 | `landing_to_bronze.ipynb` | `src/glue_jobs/landing_to_bronze.py` | Ingere CSVs da Landing Zone e grava tabelas Iceberg na camada Bronze |
 | `bronze_exploration.ipynb` | *(exploração — sem job correspondente)* | Lista todas as tabelas do database Bronze e exibe as 10 primeiras linhas de cada uma via Amazon Athena |
-| `silver_exploration.ipynb` | *(exploração — sem job correspondente)* | Explora as tabelas da camada Silver: schema tipado, amostra, perfil de nulos e estatísticas. Resultados consolidados em `silver_exploration.md` |
 | `bronze_to_silver.ipynb` | `src/glue_jobs/bronze_to_silver.py` | Protótipo das transformações Bronze → Silver: tipagem, deduplicação e criação das tabelas Iceberg na Silver |
+| `silver_exploration.ipynb` | *(exploração — sem job correspondente)* | Explora as tabelas da camada Silver: schema tipado, amostra, perfil de nulos e estatísticas. Resultados consolidados em `silver_exploration.md` |
+| `export_gold_to_csv.ipynb` | *(utilitário — sem job correspondente)* | Exporta tabelas Gold (dims + fcts), tabelas Silver e queries analíticas Q1–Q4 para CSV em `data/exports/`, prontos para consumo no Power BI |
 
 ## Documentos de design
 
