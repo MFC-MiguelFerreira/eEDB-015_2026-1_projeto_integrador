@@ -6,17 +6,40 @@ Este Dev Container reproduz localmente o ambiente de execução do **AWS Glue 5*
 
 Os scripts de ETL do projeto rodam no **AWS Glue** (Spark gerenciado). Para desenvolver e validar a lógica localmente — sem consumir créditos — usamos um container com o mesmo runtime do Glue: PySpark, `awsglue`, `boto3` e extensões Iceberg já instalados.
 
-Os notebooks em `scripts/` são desenvolvidos neste ambiente. Uma vez validados, o código é transportado para `src/glue_jobs/` na forma de scripts `.py` prontos para deploy no Glue.
+Os notebooks em `scripts/` são desenvolvidos neste ambiente e cobrem as três camadas do pipeline:
+
+```
+scripts/landing_to_bronze.ipynb   →  src/glue_jobs/landing_to_bronze.py
+scripts/bronze_to_silver.ipynb    →  src/glue_jobs/bronze_to_silver.py
+scripts/export_gold_to_csv.ipynb  →  src/glue_jobs/silver_to_gold.py
+```
+
+Uma vez validados, os notebooks são adaptados para scripts `.py` em `src/glue_jobs/`, prontos para deploy no AWS Glue.
 
 > Para instruções sobre como executar os notebooks dentro do container, consulte o [README da pasta scripts/](../scripts/README.md).
+
+## O que está instalado no container
+
+Além do runtime base do Glue (`awsglue`, PySpark, extensões Iceberg), o `Dockerfile` instala:
+
+| Pacote/ferramenta | Função |
+|---|---|
+| `awswrangler` | Leitura/escrita otimizada no S3 e consultas ao Athena via pandas |
+| `Claude Code` | CLI da Anthropic para assistência de IA no terminal do container |
+
+As seguintes extensões do VS Code são instaladas automaticamente no container:
+
+- **Python** (`ms-python.python`) + **isort** (`ms-python.isort`)
+- **Jupyter** (`ms-toolsai.jupyter`)
+- **Claude Code** (`anthropic.claude-code`)
 
 ## Pré-requisitos
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ou Docker Engine no Linux) rodando
 - [VS Code](https://code.visualstudio.com/) com a extensão **Dev Containers** instalada (`ms-vscode-remote.remote-containers`)
-- Arquivo `infrastructure/.env` preenchido com as credenciais do AWS Academy (veja abaixo)
+- Arquivo `infrastructure/.env` preenchido com as credenciais do AWS Academy e do Kaggle (veja abaixo)
 
-## Configurando as credenciais AWS
+## Configurando as credenciais
 
 As credenciais do AWS Academy Learner Lab são **efêmeras** — expiram a cada sessão (~4 horas). Por isso, é necessário atualizá-las sempre que iniciar uma nova sessão no laboratório.
 
@@ -26,15 +49,24 @@ As credenciais do AWS Academy Learner Lab são **efêmeras** — expiram a cada 
 cp infrastructure/.env.example infrastructure/.env
 ```
 
-### 2. Preencha o `.env` com as credenciais do Learner Lab
+### 2. Preencha o `.env`
 
-Acesse o painel do AWS Academy, clique em **AWS Details** → **AWS CLI** e copie os valores para o arquivo `infrastructure/.env`:
+O arquivo `infrastructure/.env` reúne dois grupos de credenciais:
+
+**AWS Academy** — acesse o painel do Learner Lab, clique em **AWS Details** → **AWS CLI** e copie os valores:
 
 ```dotenv
+AWS_DEFAULT_REGION=us-east-1
 AWS_ACCESS_KEY_ID=ASIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_SESSION_TOKEN=...
-AWS_DEFAULT_REGION=us-east-1
+```
+
+**Kaggle API** — necessário para o script de ingestão (`deploy_lambda.sh`) criar os parâmetros no SSM Parameter Store. Gere o token em **kaggle.com → Account → API → Create New Token**:
+
+```dotenv
+KAGGLE_USERNAME=...
+KAGGLE_KEY=...
 ```
 
 > **Nunca commite o arquivo `.env`.** Ele está no `.gitignore`.
@@ -49,6 +81,10 @@ O arquivo `.env` é montado dentro do container em `/home/hadoop/.env` (somente 
 4. O workspace será montado em `/home/hadoop/workspace` dentro do container.
 
 As portas **4040** (Spark UI) e **18080** (Spark History Server) são encaminhadas automaticamente para o host.
+
+### Kernel do Jupyter
+
+Ao abrir um notebook em `scripts/`, selecione o kernel **Python 3.11.14** no canto superior direito. Esse kernel corresponde ao ambiente Conda `vscode_pyspark`, que já inclui PySpark, `awsglue` e todas as dependências. Selecionar outro kernel resultará em erros de importação.
 
 ## Atualizando as credenciais sem recriar o container
 
