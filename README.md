@@ -209,3 +209,9 @@ erDiagram
 ## Como executar
 
 Consulte o **[RUNBOOK.md](RUNBOOK.md)** para pré-requisitos, deploy passo a passo, validação e troubleshooting.
+
+---
+
+## Handover
+
+O documento **[HANDOVER.md](HANDOVER.md)** registra a transição do projeto para equipes futuras. Contém o estado atual do projeto, passo a passo de recriação do ambiente, decisões técnicas tomadas, lições aprendidas, problemas conhecidos, troubleshoots e sugestões de evolução.
