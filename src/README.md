@@ -8,15 +8,19 @@ Esta pasta contém os artefatos finais prontos para deploy e execução na AWS. 
 src/
 ├── glue_jobs/               # Scripts PySpark deployados no AWS Glue
 │   ├── landing_to_bronze.py
-│   └── bronze_to_silver.py
+│   ├── bronze_to_silver.py
+│   └── silver_to_gold.py
 ├── lambdas/                 # Funções Lambda deployadas via deploy_lambda.sh
 │   └── landing_zone_ingestion/
 │       ├── handler.py
 │       └── requirements.txt
 └── .sql/                    # Queries SQL da camada Gold
-    ├── create/              # DDL — criação das tabelas Iceberg
-    ├── insert/              # DML — carga Silver → Gold
-    └── analytics/           # Queries analíticas por questão de negócio
+    ├── gold_layer.md        # Decisões de modelagem da camada Gold
+    ├── gold_catalog.md      # Catálogo de campos e diagrama ER
+    ├── create/              # DDL individual por tabela Iceberg
+    ├── insert/              # DML individual Silver → Gold por tabela
+    └── analytics/           # Queries analíticas individuais por questão
+        ├── analytics_guide.md   # Guia de uso e argumentação das queries
         ├── q1/              # Oncologia: Copay × Coinsurance
         ├── q2/              # Competição × Prêmio por estado
         ├── q3/              # Benefícios como variável de precificação
@@ -33,6 +37,7 @@ Scripts PySpark executados pelo **AWS Glue** (Spark gerenciado). Cada arquivo co
 |---|---|---|
 | `landing_to_bronze.py` | `eedb015-landing-to-bronze` | `04-glue-etl` |
 | `bronze_to_silver.py` | `eedb015-bronze-to-silver` | `04-glue-etl` |
+| `silver_to_gold.py` | `eedb015-silver-to-gold` | `04-glue-etl` |
 
 O deploy é feito pelo script `infrastructure/scripts/deploy_glue_jobs.sh`, que faz upload dos `.py` para o bucket Landing Zone e atualiza o stack CloudFormation correspondente.
 
@@ -55,6 +60,12 @@ O deploy é feito pelo script `infrastructure/scripts/deploy_lambda.sh`, que emp
 ## .sql/
 
 Queries SQL que definem e carregam a camada Gold. A orquestração dessas queries via **AWS Step Functions** está planejada e ainda não implementada. Consulte [`scripts/silver_to_gold.md`](../scripts/silver_to_gold.md) para o design completo da camada.
+
+Para as decisões de modelagem e o catálogo de campos, consulte os documentos internos da pasta:
+
+- [`gold_layer.md`](.sql/gold_layer.md) — Decisões de design e justificativas da camada Gold
+- [`gold_catalog.md`](.sql/gold_catalog.md) — Catálogo de campos e diagrama ER
+- [`analytics/analytics_guide.md`](.sql/analytics/analytics_guide.md) — Guia de uso e argumentação das queries analíticas
 
 ### create/
 
@@ -94,5 +105,7 @@ Queries analíticas que respondem às questões de negócio do projeto, consumin
 | `analytics/q2/evolucao_yoy_premio.sql` | Q2 | Variação % do prêmio de 2014 → 2016 por estado |
 | `analytics/q3/correlacao_cobertura_premio.sql` | Q3 | Correlação entre cobertura de benefícios e prêmio por tipo/nível metálico |
 | `analytics/q3/premio_por_categoria_beneficio.sql` | Q3 | Prêmio médio agrupado por categoria de benefício |
+| `analytics/q3/faixa_cobertura_vs_premio.sql` | Q3 | Prêmio médio por faixa de cobertura dentro do mesmo nível metálico |
+| `analytics/q3/dataset_analitico_plano.sql` | Q3 | Dataset analítico (uma linha por plano) para scatter plot no Power BI |
 | `analytics/q4/premio_por_porte_rede.sql` | Q4 | Prêmio médio por porte de rede (small/medium/large) e estado |
 | `analytics/q4/redes_pequenas_vs_media_estado.sql` | Q4 | Diferença entre prêmio de redes pequenas e a média estadual |

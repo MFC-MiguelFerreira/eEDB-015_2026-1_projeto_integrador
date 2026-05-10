@@ -1,6 +1,9 @@
 # Projeto Integrador eEDB-015/2026-1
+### Health Insurance Marketplace — Pipeline de Dados & Análise (Grupo 05)
 
-Repositório do Projeto Integrador da disciplina eEDB-015/2026-1 — Curso de Especialização em Big Data, Escola Politécnica da USP.
+Repositório da disciplina **Projeto Integrador (eEDB-015/2026-1)** — Curso de Especialização em Big Data, Escola Politécnica da USP.
+
+---
 
 ## Integrantes
 
@@ -11,49 +14,198 @@ Repositório do Projeto Integrador da disciplina eEDB-015/2026-1 — Curso de Es
 | Miguel Ferreira |
 | Simone Pereira  |
 
-## Objetivo do Projeto
+---
 
-Este projeto aplica na prática os conhecimentos adquiridos ao longo do curso de Especialização em Big Data, construindo um pipeline de dados completo — da ingestão bruta até uma entrega visual em BI — sobre o dataset [Health Insurance Marketplace (Kaggle)](https://www.kaggle.com/datasets/hhs/health-insurance-marketplace).
+## Problema e Objetivos
 
-O dataset contém dados detalhados sobre planos de saúde e odontológicos oferecidos nos EUA entre 2014 e 2016. O desafio central é a fragmentação dos dados em arquivos anuais isolados.
+O dataset público [Health Insurance Marketplace (Kaggle)](https://www.kaggle.com/datasets/hhs/health-insurance-marketplace) contém dados detalhados sobre planos de saúde comercializados nos EUA entre 2014 e 2016. O desafio central é a **fragmentação dos dados em arquivos anuais isolados**, que impede comparações temporais diretas.
 
-### Questões de Projeto
+O projeto constrói um pipeline de dados completo — da ingestão bruta até entrega visual — respondendo às seguintes questões analíticas:
 
-**1. Estrutura de custos em tratamentos oncológicos**
-Como evoluiu a relação entre Copay e Coinsurance para tratamentos de Câncer (Quimioterapia e Radioterapia) nos planos de 2014 a 2016? Qual categoria de plano minimiza a exposição financeira total do paciente com doenças crônicas que exigem terapia de infusão recorrente?
+| # | Questão |
+|---|---------|
+| Q1 | Como evoluiu a relação entre Copay e Coinsurance para tratamentos oncológicos (2014–2016)? Qual tipo de plano minimiza a exposição financeira de pacientes com doenças crônicas? |
+| Q2 | Qual a correlação entre a densidade de concorrência (número de seguradoras por estado) e o prêmio médio cobrado? |
+| Q3 | Os benefícios cobertos são a única variável que influencia o preço? É possível quantificar o peso de cada categoria? |
+| Q4 | Qual a relação entre o tamanho da rede de prestadores e o preço do plano? Redes menores oferecem preços menores? |
+| Q5 *(extra)* | A ausência de concorrência em certas áreas cria um efeito de monopólio que infla os prêmios? |
 
-**2. Competição e precificação por estado**
-Qual é a correlação entre a densidade de competição — medida pelo número de seguradoras operando num mesmo estado — e o valor médio do prêmio cobrado ao consumidor final?
+---
 
-**3. Benefícios como variável de precificação**
-Os benefícios fornecidos pelo plano são a única variável que influencia no valor final? É possível classificá-los e quantificar o peso de cada categoria sobre o preço do plano?
+## Resultado Final
 
-**4. Tamanho da rede e preço do plano**
-Qual é a relação entre a amplitude da rede de prestadores (Network Size) de uma seguradora e o preço final do plano? Seguradoras com redes menores conseguem oferecer preços significativamente mais baixos no mesmo estado?
+O resultado final do projeto é um **dashboard analítico interativo** com visuais que fornecem insights capazes de responder às questões de projeto formuladas (Q1–Q4). O dashboard está disponível em [docs/index.html](docs/index.html) e pode ser acessado diretamente via [GitHub Pages](https://mfc-miguelferreira.github.io/eEDB-015_2026-1_projeto_integrador/).
 
-**5. Monopólios e desigualdade geográfica** *(objetivo extra)*
-A ausência de concorrência entre seguradoras em determinadas Áreas de Serviço cria um efeito de monopólio que infla artificialmente os prêmios dos planos básicos, em comparação com mercados altamente competitivos em grandes centros urbanos?
+[![Dashboard — Health Insurance Marketplace Analytics](docs/dashboard_print.png)](https://mfc-miguelferreira.github.io/eEDB-015_2026-1_projeto_integrador/)
+
+---
+
+## Arquitetura
+
+O projeto implementa um **Data Lake em arquitetura Medallion** na AWS, com armazenamento em S3/Iceberg e orquestração via Step Functions:
+
+![Arquitetura](/docs/architecture.png)
+
+### Tecnologias principais
+
+| Categoria | Serviço/Ferramenta | Função |
+|---|---|---|
+| Armazenamento | Amazon S3 + Apache Iceberg | Camadas Bronze, Silver e Gold |
+| Ingestão | AWS Lambda (Python 3.12) | Download dos CSVs do Kaggle |
+| ETL | AWS Glue Jobs (PySpark / Python Shell) | Transformações entre camadas |
+| Orquestração | AWS Step Functions | Pipeline Lambda → Bronze → Silver → Gold |
+| Catalogação | AWS Glue Data Catalog | Metadados e schemas |
+| Análise | Amazon Athena | Queries SQL sobre S3 |
+| IaC | AWS CloudFormation | Provisionamento declarativo |
+| Desenvolvimento local | Dev Container (Docker) | Replica o runtime do Glue localmente |
+
+---
 
 ## Estrutura do Repositório
 
 ```
 .
-├── infrastructure/   # IaC (CloudFormation) e scripts de deploy na AWS
-├── src/              # Scripts de produção (Glue Jobs e Lambdas)
-├── scripts/          # Notebooks de desenvolvimento e teste local
-└── .devcontainer/    # Ambiente local que replica o runtime do AWS Glue
+├── docs/                   # Dashboard HTML publicado via GitHub Pages
+│   └── index.html          # Visualização final das análises Q1–Q4
+├── infrastructure/         # IaC (CloudFormation) e scripts de deploy AWS
+├── src/                    # Artefatos de produção (Glue Jobs, Lambdas, SQL)
+│   └── .sql/
+│       ├── gold_catalog.md # Dicionário de campos e diagrama ER completo
+│       ├── gold_layer.md   # Decisões de modelagem da camada Gold
+│       ├── create/         # DDL das tabelas Iceberg (Gold)
+│       ├── insert/         # DML Silver → Gold por tabela
+│       └── analytics/      # Queries analíticas Q1–Q4
+├── scripts/                # Notebooks Jupyter de desenvolvimento e exploração
+├── data/exports/           # CSVs exportados da Gold para uso no dashboard
+└── .devcontainer/          # Container Docker que replica o runtime do AWS Glue
 ```
 
-### Por onde começar
+Cada subpasta possui seu próprio README com detalhes específicos:
 
-**1. Infraestrutura AWS** — [`infrastructure/`](infrastructure/README.md)
-Provisionamento dos recursos AWS (S3, Glue, Lambda, Athena) via CloudFormation. Contém os scripts de deploy e as instruções para configurar as credenciais efêmeras do AWS Academy Learner Lab.
+- [infrastructure/README.md](infrastructure/README.md) — stacks CloudFormation, scripts de deploy e remoção
+- [src/README.md](src/README.md) — Glue Jobs, Lambdas e queries SQL
+- [scripts/README.md](scripts/README.md) — notebooks de desenvolvimento e documentos de design
+- [.devcontainer/README.md](.devcontainer/README.md) — configuração do ambiente local
+- [docs/index.html](docs/index.html) — dashboard estático publicado via [GitHub Pages](https://mfc-miguelferreira.github.io/eEDB-015_2026-1_projeto_integrador/)
 
-**2. Ambiente de desenvolvimento local** — [`.devcontainer/`](.devcontainer/README.md)
-Container Docker que replica o runtime do AWS Glue 5 localmente (PySpark + `awsglue` + Iceberg). Use-o para desenvolver e testar os scripts sem consumir créditos AWS. Inclui instruções para abrir o ambiente no VS Code e atualizar as credenciais entre sessões.
+---
 
-**3. Desenvolvimento de scripts ETL** — [`scripts/`](scripts/README.md)
-Notebooks Jupyter para prototipação dos Glue Jobs. Todo script novo deve ser desenvolvido aqui primeiro — dentro do Dev Container — e só transportado para `src/` após validado.
+## Modelo de Dados da Camada Gold
 
-**4. Scripts de produção** — [`src/`](src/README.md)
-Versões finais dos Glue Jobs (`.py`) e Lambdas prontos para deploy na AWS. Não edite diretamente sem antes validar a lógica no notebook correspondente em `scripts/`.
+A camada Gold segue um **esquema estrela** com 3 tabelas de fato e 5 dimensões. O diagrama abaixo é o subsídio central para responder às questões Q1–Q4. O dicionário completo de campos está em [src/.sql/gold_catalog.md](src/.sql/gold_catalog.md).
+
+```mermaid
+erDiagram
+
+    dim_time {
+        INT    business_year PK
+        STRING year_label
+        STRING aca_phase
+    }
+
+    dim_geography {
+        STRING geo_sk              PK
+        STRING state_code
+        STRING state_name
+        STRING census_region
+        STRING census_division
+        INT    num_counties_covered
+    }
+
+    dim_benefit_category {
+        STRING  benefit_sk       PK
+        STRING  benefit_name
+        STRING  benefit_category
+        BOOLEAN is_oncology
+        BOOLEAN is_preventive
+        BOOLEAN is_mental_health
+        BOOLEAN is_chronic
+        BOOLEAN is_ehb_standard
+    }
+
+    dim_issuer {
+        STRING issuer_sk         PK
+        STRING issuer_id
+        INT    business_year
+        STRING state_code
+        INT    num_plans_offered
+        INT    num_networks
+        INT    avg_network_size
+    }
+
+    dim_network {
+        STRING  network_sk        PK
+        STRING  network_id
+        STRING  network_name
+        STRING  issuer_id
+        STRING  state_code
+        INT     business_year
+        INT     plan_count
+        STRING  network_size_tier
+    }
+
+    dim_plan {
+        STRING  plan_sk               PK
+        STRING  plan_id_base
+        INT     business_year
+        STRING  metal_level
+        STRING  plan_type
+        STRING  issuer_id
+        STRING  state_code
+        STRING  network_id
+        DOUBLE  moop_individual
+        DOUBLE  deductible_individual
+    }
+
+    fct_plan_premium {
+        STRING plan_sk             FK
+        STRING geo_sk              FK
+        INT    year_sk             FK
+        INT    age
+        STRING tobacco_flag
+        DOUBLE avg_individual_rate
+        DOUBLE min_individual_rate
+        DOUBLE max_individual_rate
+        BIGINT rate_count
+    }
+
+    fct_benefit_coverage {
+        STRING  plan_sk          FK
+        STRING  benefit_sk       FK
+        INT     year_sk          FK
+        BOOLEAN is_covered
+        BOOLEAN is_ehb
+        DOUBLE  copay_inn_tier1
+        DOUBLE  coins_inn_tier1
+        BOOLEAN is_subj_to_ded
+        INT     limit_qty
+        STRING  cost_type
+    }
+
+    fct_market_competition {
+        STRING geo_sk                     FK
+        INT    year_sk                    FK
+        BIGINT num_active_issuers
+        BIGINT num_active_plans
+        DOUBLE avg_premium_individual
+        DOUBLE median_premium_individual
+        STRING competition_tier
+    }
+
+    dim_plan             }o--|| dim_issuer            : "issuer_id + year"
+    dim_plan             }o--|| dim_network           : "network_id + year"
+    fct_plan_premium     }o--|| dim_plan              : "plan_sk"
+    fct_plan_premium     }o--|| dim_geography         : "geo_sk"
+    fct_plan_premium     }o--|| dim_time              : "year_sk"
+    fct_benefit_coverage }o--|| dim_plan              : "plan_sk"
+    fct_benefit_coverage }o--|| dim_benefit_category  : "benefit_sk"
+    fct_benefit_coverage }o--|| dim_time              : "year_sk"
+    fct_market_competition }o--|| dim_geography       : "geo_sk"
+    fct_market_competition }o--|| dim_time            : "year_sk"
+```
+
+---
+
+## Como executar
+
+Consulte o **[RUNBOOK.md](RUNBOOK.md)** para pré-requisitos, deploy passo a passo, validação e troubleshooting.
