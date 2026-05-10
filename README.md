@@ -32,28 +32,19 @@ O projeto constrói um pipeline de dados completo — da ingestão bruta até en
 
 ---
 
+## Resultado Final
+
+O resultado final do projeto é um **dashboard analítico interativo** com visuais que fornecem insights capazes de responder às questões de projeto formuladas (Q1–Q4). O dashboard está disponível em [docs/index.html](docs/index.html) e pode ser acessado diretamente via [GitHub Pages](https://mfc-miguelferreira.github.io/eEDB-015_2026-1_projeto_integrador/).
+
+[![Dashboard — Health Insurance Marketplace Analytics](docs/dashboard_print.png)](https://mfc-miguelferreira.github.io/eEDB-015_2026-1_projeto_integrador/)
+
+---
+
 ## Arquitetura
 
 O projeto implementa um **Data Lake em arquitetura Medallion** na AWS, com armazenamento em S3/Iceberg e orquestração via Step Functions:
 
-```
-Kaggle CSVs
-    │
-    ▼
-Landing Zone (S3 — CSVs brutos)
-    │  Lambda de Ingestão
-    ▼
-Bronze (S3 Iceberg — dados brutos particionados por ano)
-    │  AWS Glue Job (PySpark)
-    ▼
-Silver (S3 Iceberg — Parquet tipado + Crosswalk aplicado)
-    │  AWS Glue Job (Python Shell + Athena)
-    ▼
-Gold (S3 Iceberg — esquema estrela pronto para análise)
-    │  Amazon Athena + export CSV
-    ▼
-Dashboard (docs/index.html — publicado via GitHub Pages)
-```
+![Arquitetura](/docs/architecture.png)
 
 ### Tecnologias principais
 
