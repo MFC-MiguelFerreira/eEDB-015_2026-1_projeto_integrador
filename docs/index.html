@@ -111,6 +111,90 @@
   .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── FAQ & Glossário ── */
+  .faq-section { margin-bottom: 40px; }
+  .faq-section-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-num {
+    background: rgba(99,102,241,.15); color: var(--accent);
+    border: 1px solid rgba(99,102,241,.3); border-radius: 4px;
+    padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  .faq-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+  }
+  .faq-item summary {
+    padding: 15px 20px; cursor: pointer; font-size: 14px; font-weight: 600;
+    list-style: none; display: flex; justify-content: space-between;
+    align-items: center; user-select: none; gap: 12px;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after {
+    content: '+'; font-size: 22px; font-weight: 300; color: var(--accent);
+    flex-shrink: 0; line-height: 1;
+  }
+  .faq-item[open] summary::after { content: '−'; }
+  .faq-item summary:hover { background: var(--surface2); }
+  .faq-item[open] summary { background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .faq-body { padding: 0 22px 22px; }
+  .faq-part { margin-top: 18px; }
+  .faq-part-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 7px;
+  }
+  .faq-part p, .faq-part ul, .faq-part ol {
+    color: var(--muted); line-height: 1.75; font-size: 13px;
+  }
+  .faq-part ul, .faq-part ol { padding-left: 20px; }
+  .faq-part li { margin-bottom: 4px; }
+  .faq-part strong { color: var(--text); }
+  .faq-analogy {
+    background: rgba(99,102,241,.06); border: 1px solid rgba(99,102,241,.2);
+    border-radius: 8px; padding: 12px 16px; margin-top: 16px;
+    font-size: 13px; color: var(--muted); line-height: 1.75;
+  }
+  .faq-analogy strong { color: var(--text); }
+  .analogy-icon { margin-right: 4px; }
+  .faq-table {
+    width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px;
+  }
+  .faq-table th {
+    background: var(--surface2); padding: 8px 12px; text-align: left;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .faq-table td {
+    padding: 8px 12px; border-bottom: 1px solid rgba(46,51,72,.5);
+    color: var(--text); vertical-align: top; line-height: 1.55; font-size: 12px;
+  }
+  .faq-table tr:last-child td { border-bottom: none; }
+  .faq-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: .5px; white-space: nowrap;
+  }
+  .faq-badge.bronze { background: rgba(205,127,50,.15); color: var(--bronze); border: 1px solid rgba(205,127,50,.3); }
+  .faq-badge.silver { background: rgba(148,163,184,.12); color: var(--silver); border: 1px solid rgba(148,163,184,.3); }
+  .faq-badge.gold-m { background: rgba(245,158,11,.12); color: var(--gold); border: 1px solid rgba(245,158,11,.3); }
+  .faq-badge.platinum { background: rgba(167,139,250,.12); color: var(--platinum); border: 1px solid rgba(167,139,250,.3); }
+  .faq-badge.catastrophic { background: rgba(107,114,128,.12); color: #9ca3af; border: 1px solid rgba(107,114,128,.3); }
+  .faq-badge.hmo { background: rgba(34,197,94,.1); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+  .faq-badge.ppo { background: rgba(251,146,60,.1); color: #fb923c; border: 1px solid rgba(251,146,60,.3); }
+  .faq-badge.epo { background: rgba(96,165,250,.1); color: #60a5fa; border: 1px solid rgba(96,165,250,.3); }
+  .faq-badge.pos { background: rgba(232,121,249,.1); color: #e879f9; border: 1px solid rgba(232,121,249,.3); }
+  .faq-highlight {
+    background: rgba(99,102,241,.06); border-left: 3px solid var(--accent);
+    padding: 12px 16px; border-radius: 0 6px 6px 0; margin-top: 14px;
+    font-size: 13px; color: var(--muted); line-height: 1.75;
+  }
+  .faq-highlight strong { color: var(--text); }
+  .faq-highlight ul { padding-left: 18px; margin-top: 6px; }
+  .faq-highlight li { margin-bottom: 5px; }
 </style>
 </head>
 <body>
@@ -130,6 +214,7 @@
     <button class="tab-btn" data-tab="q3">Q3 · Benefícios & Precificação</button>
     <button class="tab-btn" data-tab="q4">Q4 · Rede & Preço</button>
     <button class="tab-btn" data-tab="q5">Q5 · Monopólios & Desertos</button>
+    <button class="tab-btn" data-tab="faq">FAQ & Glossário</button>
   </div>
 </div>
 
@@ -503,6 +588,649 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- TAB: FAQ & GLOSSÁRIO DE NEGÓCIO                             -->
+<!-- ============================================================ -->
+<div id="tab-faq" class="tab-panel">
+  <div class="section-header">
+    <div class="label">Guia Educacional</div>
+    <h2>FAQ & Glossário de Negócio</h2>
+    <p>Guia completo para compreender o mercado americano de seguros de saúde, o ecossistema ACA/Marketplace e os conceitos que fundamentam todas as análises deste dashboard. Desenvolvido para usuários brasileiros sem familiaridade prévia com o sistema de saúde dos Estados Unidos.</p>
+  </div>
+
+  <!-- ── SEÇÃO 1: O Ecossistema ACA ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 1</span> O Ecossistema ACA & Marketplace</div>
+
+    <details class="faq-item">
+      <summary>1. O que é o Health Insurance Marketplace?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>Health Insurance Marketplace</strong> (também chamado de <em>Exchange</em>) é uma plataforma onde cidadãos americanos podem pesquisar, comparar e contratar planos de saúde individuais. Foi criado pelo <em>Affordable Care Act</em> (ACA) e funciona como um "shopping" de seguros regulamentado pelo governo federal.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Antes do ACA, quem não tinha plano pelo emprego precisava negociar diretamente com cada seguradora, sem padronização de produtos nem proteção contra recusa por histórico médico. O Marketplace centralizou isso: todas as seguradoras que queiram vender planos individuais precisam seguir as mesmas regras, listar seus produtos na plataforma e competir de forma transparente. A plataforma federal (HealthCare.gov) é operada pelo governo federal; alguns estados optaram por criar plataformas próprias (<em>State-Based Exchanges</em>).</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>O dataset deste projeto representa <strong>integralmente o Marketplace federal</strong> entre 2014 e 2016. Cada linha das tabelas <code>rate</code>, <code>plan_attributes</code> e <code>benefits_cost_sharing</code> corresponde a um produto vendido nessa plataforma. O dataset <strong>não cobre</strong> planos corporativos, Medicare (idosos 65+) nem Medicaid (baixa renda) — apenas o mercado individual regulado pelo ACA.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Essa delimitação é fundamental para interpretar os gráficos: todos os KPIs de prêmio, cobertura e competição do dashboard referem-se <strong>apenas ao segmento individual do ACA Marketplace</strong>. Um estado que aparece com poucos planos ou altos prêmios pode ter competição saudável no mercado corporativo — o dataset não captura isso.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Um trabalhador autônomo de 35 anos em Ohio que não tem plano pelo trabalho acessa o HealthCare.gov, filtra planos disponíveis em seu condado, compara prêmios e coberturas, e contrata diretamente pela plataforma. Todos os planos que ele enxerga são exatamente os que aparecem neste dataset.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> O Marketplace é comparável à <strong>ANS (Agência Nacional de Saúde Suplementar)</strong> combinada com um portal público de comparação de planos. Enquanto a ANS regula as regras, o Marketplace é também o canal de venda direto — diferente do Brasil, onde planos são vendidos por corretoras ou diretamente pelas operadoras.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>2. O que é o ACA (Affordable Care Act / "Obamacare")?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>Affordable Care Act (ACA)</strong>, aprovado em 2010 e implementado a partir de 2014, é a maior reforma do sistema de saúde americano em décadas. Popularmente chamado de "Obamacare", ele expandiu o acesso à saúde por meio de três pilares: criação do Marketplace, expansão do Medicaid e subsídios federais para reduzir o custo dos planos.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>As principais mudanças do ACA relevantes para este dataset:</p>
+        <ul>
+          <li><strong>Proibição de recusa</strong> por condições pré-existentes (câncer, diabetes, etc.)</li>
+          <li><strong>Cobertura de dependentes</strong> até os 26 anos no plano dos pais</li>
+          <li><strong>Essential Health Benefits (EHBs):</strong> 10 categorias obrigatórias em todo plano</li>
+          <li><strong>Limite de out-of-pocket:</strong> teto máximo anual de gastos do consumidor</li>
+          <li><strong>Eliminação de limites anuais</strong> para EHBs</li>
+          <li><strong>Subsídios federais (APTC)</strong> para famílias com renda entre 100–400% da linha de pobreza</li>
+          <li><strong>Variantes CSR</strong> (Cost-Sharing Reductions): planos Silver com deductibles reduzidos para baixa renda</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Os anos 2014–2016 representam os <strong>primeiros três anos de implementação</strong> do ACA. O campo <code>aca_phase</code> da <code>dim_time</code> classifica: "Year 1" (2014 — mercado estreando, muita subprecificação), "Year 2" (2015 — primeira rodada de ajustes actuariais) e "Year 3" (2016 — mercado mais maduro). Os filtros estruturais do pipeline — exclusão de variantes CSR, foco no mercado individual — refletem diretamente as regras do ACA.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>A variação de prêmios entre 2014 e 2016 (visível no dashboard Q2) não é resultado apenas de inflação médica comum — reflete o <strong>processo de calibração actuarial</strong> de um mercado inteiramente novo. Seguradoras que subprecificaram em 2014 (por falta de dados históricos) aumentaram prêmios em 2015–2016. Estados onde muitas seguradoras saíram do mercado (delta_issuers negativo) experimentaram os maiores aumentos.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Antes do ACA (2013): uma pessoa com histórico de câncer poderia ser recusada por qualquer seguradora ou pagar prêmios proibitivos. A partir de 2014: ela acessa o Marketplace, declara sua condição sem penalidade e contrata um plano — pagando o mesmo prêmio que qualquer outra pessoa da mesma faixa etária no mesmo estado.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> O ACA tem paralelos com a <strong>Lei 9.656/1998 (Lei dos Planos de Saúde)</strong> e com a ANS, que também padronizou coberturas obrigatórias e proibiu exclusões por doenças pré-existentes após carência. A diferença fundamental é que o sistema de saúde americano é majoritariamente privado — o ACA não criou um "SUS americano", apenas regulamentou o mercado privado.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>3 & 4. O que é uma State-Based Exchange e uma Federal Exchange (HealthCare.gov)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O ACA permitiu que cada estado escolhesse operar seu próprio marketplace (<strong>State-Based Exchange — SBE</strong>) ou usar a plataforma federal (<strong>Federal Exchange</strong>, acessada via HealthCare.gov). Ambas seguem as mesmas regras básicas do ACA, mas as SBEs têm mais flexibilidade regulatória e coletam dados próprios.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Estados com SBE próprias incluem <strong>California (Covered California), New York, Colorado, Washington, Massachusetts</strong> e outros 13+. Esses estados coletam seus próprios dados, publicam seus próprios relatórios e submetem informações ao CMS de forma diferente — por isso aparecem com <strong>dados limitados ou ausentes</strong> na base federal do Kaggle. Os estados que usam a Federal Exchange — como <strong>Texas, Florida, Ohio, North Carolina</strong> — têm dados completos, pois toda transação passa pelo sistema do governo federal.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>No dashboard, estados como California, New York e Colorado aparecem no mapa com dados <strong>ausentes (NULL)</strong>. Isso não significa que esses estados não têm mercado de saúde — significa que seus dados não estão na base federal. A query <code>competicao_vs_premio_por_estado.sql</code> usa um CROSS JOIN para garantir que esses estados apareçam explicitamente com NULL, em vez de serem omitidos silenciosamente do mapa.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Esse é um <strong>viés de cobertura crítico</strong> do dataset: os estados historicamente mais competitivos e populosos (California, Nova York) são justamente os que têm menos dados. As conclusões sobre correlação competição-preço (Q2) baseiam-se predominantemente em estados menores e menos populosos. Isso não invalida a análise, mas limita a generalização para o mercado americano como um todo.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>No mapa da aba Q2, California aparece em cinza — não porque é barata ou cara, mas porque opera a Covered California (SBE própria) e seus dados não estão na base federal que originou o dataset. O KPI "32 estados com dados federais" reflete exatamente esse gap.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> É similar à diferença entre estados que operavam sistemas próprios de compras públicas versus os que usavam o portal ComprasNet federal — os dados dos primeiros ficavam fora da base centralizada, criando gaps de cobertura analítica similares.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>5. Por que alguns estados criaram exchanges próprias?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>Estados com maior autonomia política e capacidade técnica preferiram controlar o marketplace localmente — para personalizar regras além do mínimo federal, integrar melhor com programas estaduais de assistência social e construir bases de dados proprietárias sobre sua população.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Os principais motivos para criar SBE:</p>
+        <ul>
+          <li><strong>Autonomia regulatória:</strong> SBEs podem impor requisitos adicionais ao mínimo federal — ex: NY exige mais benefícios do que o mínimo ACA</li>
+          <li><strong>Integração com Medicaid estadual:</strong> "one-stop shop" onde o consumidor descobre se é elegível para Medicaid ou para subsídio do marketplace em um único sistema</li>
+          <li><strong>Dados e inteligência local:</strong> acesso a dados granulares de inscritos que o governo federal não repassa totalmente</li>
+          <li><strong>Identidade política:</strong> estados que apoiavam o ACA (geralmente democratas) criaram SBEs para demonstrar comprometimento com a reforma</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Geograficamente, as SBEs concentram-se no <strong>Nordeste e Costa Oeste</strong> — regiões de maior densidade urbana e historicamente mais favoráveis à regulação de mercado. Ironicamente, esses mercados tendem a ser os mais competitivos, o que introduz viés na análise: o dataset federal pode superestimar a prevalência de mercados oligopolísticos, porque os estados mais competitivos (CA, NY) estão sub-representados.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Para o dashboard, esse fenômeno aparece no KPI "Estados com dados federais: 32 de 51". A análise de competição (Q2) e de desertos de cobertura (Q5) deve ser lida com a ressalva de que <strong>19 estados com SBE não aparecem</strong> ou aparecem de forma incompleta.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Massachusetts criou o pioneiro "Connector" estadual em 2006, sob o governador Mitt Romney — anos antes do ACA. Quando a lei federal foi aprovada, Massachusetts simplesmente adaptou seu sistema existente. Seus dados ficaram fora do sistema federal, tornando o estado invisível no nosso dataset apesar de ter um dos mercados mais maduros do país.</p></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 2: Estrutura de Custos ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 2</span> Estrutura de Custos — Os Quatro Componentes do Plano</div>
+
+    <details class="faq-item">
+      <summary>6. O que é premium (prêmio do seguro)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>premium</strong> (prêmio) é o valor mensal pago para manter o plano de saúde ativo — independentemente de o segurado usar ou não qualquer serviço médico no mês. É o custo fixo de "assinatura" do seguro.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Sob o ACA, o prêmio varia por:</p>
+        <ul>
+          <li><strong>Idade:</strong> o ACA permite variação máxima de 3:1 (o mais velho paga até 3× o mais jovem). No dataset, a faixa analisada é 21–64 anos</li>
+          <li><strong>Estado de residência:</strong> prêmios variam enormemente — Alaska e Wyoming são os mais caros; estados do Sul tendem a ser mais baratos</li>
+          <li><strong>Metal level:</strong> Bronze &lt; Silver &lt; Gold &lt; Platinum</li>
+          <li><strong>Tabagismo:</strong> o ACA permite surcharge de até 50% para tabagistas (campo <code>tobacco_flag</code> no dataset)</li>
+          <li><strong>Plano específico:</strong> dentro do mesmo metal level, seguradoras diferem os prêmios por rede, benefícios e estratégia comercial</li>
+        </ul>
+        <p>O ACA <strong>proíbe</strong> variação de prêmio por gênero ou histórico médico — todos pagam o mesmo prêmio no mesmo plano, independente de doenças pré-existentes.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>A tabela <code>fct_plan_premium</code> contém o prêmio agregado por <code>(plan_sk, geo_sk, year_sk, age, tobacco_flag)</code>. O <strong>benchmark padrão CMS</strong> — usado em todas as comparações Q2, Q3 e Q4 — é <strong>27 anos, sem preferência de tabaco</strong>. Os campos <code>min_individual_rate</code> e <code>max_individual_rate</code> revelam a variação por área de serviço dentro do mesmo estado para o mesmo plano.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>O prêmio é o <strong>KPI central de precificação</strong> de todo o dashboard — aparece como variável dependente nas análises de competição (Q2), benefícios (Q3) e rede (Q4). Na análise Q1, o prêmio anual (prêmio × 12) entra na estimativa de custo total do paciente oncológico, revelando que um plano Bronze pode custar mais <em>no total</em> do que um Gold para pacientes com uso intenso de serviços.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Um adulto de 27 anos em Ohio com plano Gold PPO em 2016: prêmio de <strong>$285/mês = $3.420/ano</strong>. Esse valor sai do bolso mensalmente independente de consultas, exames ou internações. Se não usar nenhum serviço no ano, pagou $3.420. Se precisar de quimioterapia, esse prêmio é apenas o começo dos gastos.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> Equivale à <strong>mensalidade do plano de saúde</strong> no Brasil (ex: R$600/mês para um plano individual). A diferença é que nos EUA a variação por faixa etária é muito mais acentuada (até 3×) e não existe variação por gênero.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>7. O que é deductible (franquia)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>deductible</strong> é o valor que o segurado paga do próprio bolso em serviços médicos <em>antes</em> de o plano começar a contribuir com os custos. É uma franquia anual — zera todo 1º de janeiro.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Imagine um plano Bronze com deductible de $6.000. O segurado vai ao médico em fevereiro com uma fratura e a conta é $4.000 — ele paga $4.000 integralmente. Em junho, tem uma cirurgia de $8.000. Ele paga mais $2.000 (atingindo o deductible de $6.000) e o plano cobre o restante ($6.000). <strong>Serviços preventivos são exceção</strong>: o ACA exige que sejam cobertos sem deductible em todos os planos.</p>
+        <p>O campo <code>is_subj_to_ded</code> no dataset indica se um benefício específico exige o esgotamento do deductible antes de a cobertura entrar. Para quimioterapia, esse campo é crítico: muitos planos Bronze têm <code>is_subj_to_ded = TRUE</code>, significando que o paciente oncológico paga a franquia inteira ($5.000–$6.000) antes de receber qualquer auxílio do plano.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Campos relevantes: <code>dim_plan.deductible_individual</code> (MEHBDedInnTier1Individual) e <code>fct_benefit_coverage.is_subj_to_ded</code>. Na análise Q1, o campo <code>avg_deductible_efetivo</code> da query <code>evolucao_copay_coinsurance</code> calcula a franquia média apenas para planos que efetivamente a cobram nos benefícios oncológicos — revelando o "custo oculto" do plano Bronze.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>O deductible é o principal responsável pelo paradoxo financeiro do Bronze: prêmio baixo, mas alto custo de primeiro uso. O gráfico de barras empilhadas da Q1 (copay + deductible efetivo por metal level) torna visível esse custo oculto. Planos Platinum tipicamente têm deductible próximo de zero — o custo de uso é previsível desde a primeira consulta.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Plano Bronze (deductible $6.000, coinsurance 30%): paciente de câncer com 12 sessões de quimioterapia a $10.000 cada = $120.000 em serviços. Ele paga $6.000 integrais (deductible) + 30% dos $114.000 restantes = $34.200, até o limite do MOOP (~$6.850 total de desembolso no ano). O deductible entra no cálculo como custo imediato, antes de qualquer cobertura do plano.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> Similar à <strong>franquia do seguro de carro</strong> no Brasil — você paga os primeiros R$X de cada sinistro. Nos planos de saúde brasileiros, o equivalente parcial seria a <strong>co-participação</strong>, mas o deductible americano é muito maior em magnitude e impacto financeiro anual.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>8. O que é copay e coinsurance?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p><strong>Copay</strong> é um valor fixo pago por serviço (ex: $30 por consulta, independente do custo real). <strong>Coinsurance</strong> é um percentual do custo do serviço pago pelo segurado (ex: 20% de uma cirurgia de $10.000 = $2.000). Ambos são mecanismos de <em>cost-sharing</em> — divisão de custos entre plano e paciente — que se aplicam geralmente <em>após</em> o deductible ser esgotado.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Comparação Prática</div>
+        <table class="faq-table">
+          <tr><th>Característica</th><th>Copay</th><th>Coinsurance</th></tr>
+          <tr><td>Valor</td><td>Fixo (ex: $50)</td><td>Percentual (ex: 20%)</td></tr>
+          <tr><td>Previsibilidade</td><td>Alta — valor conhecido antes</td><td>Baixa — depende do custo total</td></tr>
+          <tr><td>Comum para</td><td>Consultas, farmácia, urgência</td><td>Cirurgias, quimioterapia, internação</td></tr>
+          <tr><td>Risco financeiro</td><td>Baixo e previsível</td><td>Alto em procedimentos caros</td></tr>
+        </table></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Campos chave: <code>fct_benefit_coverage.copay_inn_tier1</code> e <code>coins_inn_tier1</code> (in-network), <code>copay_out_of_net</code> e <code>coins_out_of_net</code> (fora da rede). O campo <code>cost_type</code> classifica cada benefício como <code>'copay'</code>, <code>'coinsurance'</code>, <code>'both'</code> ou <code>'none'</code> (preventivos cobertos sem custo). A query <code>evolucao_copay_coinsurance</code> (Q1) acompanha a evolução de ambos para os três benefícios oncológicos — Chemotherapy, Radiation Therapy e Infusion Therapy — ao longo de 2014–2016.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Um resultado contra-intuitivo capturado no dashboard Q1: <strong>planos com coinsurance aparentemente "razoável" (30%) podem custar mais do que planos Platinum ao longo de um tratamento oncológico</strong>. O gráfico de linhas da Q1 rastreia como a coinsurance média para quimioterapia evoluiu entre 2014 e 2016, revelando se o mercado transferiu mais risco financeiro para o paciente ao longo do tempo.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p><strong>Plano A</strong> (Bronze, coinsurance 30%, deductible $5.000): quimioterapia 12 sessões × $10.000 = $120.000. Paciente paga $5.000 (deductible) + 30% dos $115.000 restantes = $39.500 — limitado ao MOOP de ~$6.850. <strong>Plano B</strong> (Platinum, copay fixo $100/sessão): 12 × $100 = $1.200 do bolso. O prêmio do Platinum é mais alto mensalmente, mas o custo total do tratamento é dramaticamente menor.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> <strong>Copay</strong> é análogo à <strong>co-participação fixa</strong> dos planos brasileiros (ex: R$30 por consulta). <strong>Coinsurance</strong> é similar à <strong>co-participação percentual</strong> presente em alguns planos (ex: 30% do custo do procedimento) — mecanismo menos comum no Brasil mas que existe especialmente em planos empresariais.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>9. O que é o out-of-pocket maximum (MOOP)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>out-of-pocket maximum</strong> (MOOP) é o <strong>teto anual</strong> de gastos do segurado com saúde. Após atingir esse valor no ano, o plano passa a cobrir 100% de todos os serviços cobertos pelo restante do ano — o segurado não paga mais nada de deductible, copay ou coinsurance.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>O MOOP é a proteção fundamental contra <strong>catástrofes financeiras de saúde</strong> — o principal objetivo do ACA para o consumidor individual. Sem ele, um diagnóstico de câncer poderia levar qualquer família à falência. O ACA estabelece um limite máximo legal: em 2016, era <strong>$6.850 para um indivíduo</strong>. As seguradoras podem definir MOOPs menores, mas nunca maiores.</p>
+        <p>A relação inversa com o prêmio é típica: planos Bronze têm MOOP alto (próximo do máximo federal) e prêmio baixo; planos Platinum têm MOOP baixo ($1.000–$2.500) e prêmio alto. O consumidor está escolhendo <strong>onde o risco financeiro ocorrerá</strong>: mensalmente (prêmio alto) ou em caso de uso intenso (MOOP alto).</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Campo: <code>dim_plan.moop_individual</code> (MEHBInnTier1IndividualMOOP). Na análise Q1, o MOOP é usado para calcular o custo máximo de tratamento: <code>LEAST(custo_12_sessões, moop_individual)</code>. Isso reflete a realidade legal: nenhum paciente paga mais do que o MOOP em um ano, independentemente do custo total do tratamento.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>O MOOP é o elemento que torna planos Platinum financeiramente vantajosos para pacientes oncológicos: a diferença de MOOP entre Bronze ($6.850) e Platinum ($2.000) pode representar $4.850 de economia em um único ano de tratamento intenso — mesmo pagando $100–$150/mês a mais de prêmio. O KPI de custo total da Q1 captura exatamente esse paradoxo.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Paciente com leucemia em plano Platinum 2016 (MOOP $2.000, prêmio $380/mês): independente do custo das sessões de quimioterapia, transplante de medula e internações, o máximo que sairá do bolso em serviços médicos no ano é $2.000. Mais $4.560 de prêmio = <strong>$6.560 de custo máximo total</strong>. No plano Bronze equivalente (MOOP $6.850, prêmio $200/mês): $6.850 + $2.400 = <strong>$9.250</strong>. O Platinum é mais barato no pior cenário.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> O conceito de MOOP <strong>não existe de forma explícita</strong> nos planos brasileiros. No Brasil, a ANS garante que planos cubram procedimentos do rol sem limites de valor, mas não há um "teto de gastos do paciente" formalizado. O MOOP americano é um mecanismo de proteção financeira especialmente importante em um sistema onde os serviços médicos têm custos muito maiores do que no Brasil.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 3: Níveis Metálicos ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 3</span> Níveis Metálicos — O Sistema de Classificação ACA</div>
+
+    <details class="faq-item">
+      <summary>10 & 11. O que são níveis metálicos? Quais são eles e o que os diferencia?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O ACA criou <strong>5 níveis metálicos</strong> para classificar os planos de acordo com a divisão de custos entre plano e consumidor. O nível é definido pelo <strong>actuarial value (AV)</strong> — percentual dos custos médicos esperados de uma população que o plano cobre em média. Quanto mais alto o metal, maior a cobertura e maior o prêmio.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Os Cinco Níveis</div>
+        <table class="faq-table">
+          <tr><th>Nível</th><th>AV (Actuarial Value)</th><th>Deductible típico</th><th>MOOP típico</th><th>Perfil ideal</th></tr>
+          <tr>
+            <td><span class="faq-badge bronze">BRONZE</span></td>
+            <td>~60%</td><td>$5.000–$6.500</td><td>$6.000–$6.850</td>
+            <td>Jovem saudável, raramente usa serviços</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge silver">SILVER</span></td>
+            <td>~70%</td><td>$2.000–$4.000</td><td>$4.500–$6.000</td>
+            <td>Consumidor médio; único tier com variantes CSR</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge gold-m">GOLD</span></td>
+            <td>~80%</td><td>$500–$1.500</td><td>$3.000–$4.500</td>
+            <td>Usuário frequente de serviços médicos</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge platinum">PLATINUM</span></td>
+            <td>~90%</td><td>$0–$500</td><td>$1.000–$2.500</td>
+            <td>Paciente crônico / oncológico / alto uso</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge catastrophic">CATASTROPHIC</span></td>
+            <td>~40–50%</td><td>$6.850 (máximo legal)</td><td>$6.850</td>
+            <td>Menores de 30 anos ou com isenção especial</td>
+          </tr>
+        </table></div>
+
+        <div class="faq-part"><div class="faq-part-label">O que muda na prática?</div>
+        <p>Todos os planos ACA (exceto Catastrophic) cobrem as mesmas 10 categorias de EHBs. O que muda é a <strong>estrutura de cost-sharing</strong>:</p>
+        <ul>
+          <li><strong>Bronze:</strong> prêmio baixo, mas alto custo de uso. Ideal se você é saudável e o plano é proteção contra catástrofes</li>
+          <li><strong>Silver:</strong> equilíbrio. Único tier com variantes CSR (subsídio federal direto de cost-sharing para baixa renda) — por isso é o mais popular</li>
+          <li><strong>Gold:</strong> deductible baixo, vantajoso se você usa consultas e exames com regularidade</li>
+          <li><strong>Platinum:</strong> como um "tudo incluído" — prêmio alto, mas quase sem custo de uso. Matematicamente vantajoso para pacientes crônicos e oncológicos</li>
+          <li><strong>Catastrophic:</strong> produto de "proteção básica" — cobre apenas 3 consultas de atenção primária antes do deductible e emergências. Proibido para maiores de 30 anos sem isenção</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Campo: <code>dim_plan.metal_level</code>. É a variável com <strong>maior poder explicativo de prêmio</strong> — mais do que benefícios cobertos, tipo de plano ou porte de rede. O scatter plot da Q3 demonstra isso visualmente: pontos coloridos por metal level formam faixas horizontais (Bronze abaixo, Platinum acima) sem alinhamento com o eixo X de cobertura de benefícios.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>O argumento central da Q1 depende dos metal levels: <strong>Platinum pode ser mais barato que Bronze para um paciente com câncer</strong>. O argumento central da Q3 depende do metal level como variável de controle — a correlação benefícios-preço é fraca <em>dentro</em> do mesmo tier; o jump de preço acontece <em>entre</em> tiers, não por cobertura adicional.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Para um adulto saudável de 27 anos que vai ao médico 1×/ano: Bronze ($180/mês, deductible $6.000) é ótimo — ele paga pouco mensalmente e raramente usa. Para um diabético com consultas mensais, exames trimestrais e medicamentos: Gold ou Platinum. Para quem está em tratamento de câncer: Platinum é matematicamente superior em praticamente todos os cenários.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> O sistema de metal levels tem alguma semelhança com a segmentação de planos brasileiros (Enfermaria / Apartamento / VIP) ou com os segmentos da ANS (ambulatorial, hospitalar, referência), mas é mais rigoroso: o actuarial value é calculado e auditado pelo CMS, enquanto no Brasil a diferenciação é mais baseada em acomodação e acesso a especialistas.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 4: Tipos de Plano e Redes ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 4</span> Tipos de Plano e Redes de Prestadores</div>
+
+    <details class="faq-item">
+      <summary>13 & 14. O que é tipo de plano? Quais são os principais (HMO, PPO, EPO, POS)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>O <strong>tipo de plano</strong> define como a rede de médicos e hospitais é organizada e como o paciente acessa serviços especializados. É independente do metal level — um HMO pode ser Bronze, Silver, Gold ou Platinum.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Os Quatro Tipos Principais</div>
+        <table class="faq-table">
+          <tr><th>Tipo</th><th>Rede</th><th>Referral p/ especialista</th><th>Cobertura fora da rede</th><th>Custo relativo</th></tr>
+          <tr>
+            <td><span class="faq-badge hmo">HMO</span></td>
+            <td>Fechada</td><td>Obrigatório (via PCP)</td>
+            <td>Não — só emergência</td><td>Mais baixo</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge ppo">PPO</span></td>
+            <td>Ampla</td><td>Não obrigatório</td>
+            <td>Sim — custo maior</td><td>Mais alto</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge epo">EPO</span></td>
+            <td>Fechada</td><td>Não obrigatório</td>
+            <td>Não — só emergência</td><td>Intermediário</td>
+          </tr>
+          <tr>
+            <td><span class="faq-badge pos">POS</span></td>
+            <td>Híbrida</td><td>Obrigatório (via PCP)</td>
+            <td>Sim — com referral</td><td>Intermediário</td>
+          </tr>
+        </table>
+        <p style="margin-top:10px;"><strong>PCP (Primary Care Physician):</strong> Médico de família/clínico geral que atua como "gatekeeper" no HMO e POS. O paciente precisa de autorização do PCP para ver um especialista. No PPO e EPO, o paciente vai direto ao especialista de sua escolha.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Campo: <code>dim_plan.plan_type</code>. Nos gráficos Q4, o tipo de plano é o <strong>controle mais importante</strong>: HMOs por design têm redes menores e prêmios mais baixos. Comparar prêmio por "porte de rede" sem controlar pelo tipo de plano produziria uma correlação espúria (HMOs seriam sempre "menores e mais baratos", confundindo tipo de produto com tamanho de rede).</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Para pacientes oncológicos (Q1), o tipo de plano tem impacto crítico: um paciente com câncer raro pode precisar de oncologista especializado em hospital de referência (ex: MD Anderson em Houston, Mayo Clinic em Minnesota). Em um HMO de rede fechada, esse hospital pode não estar credenciado — o paciente teria que pagar 100% do custo ou aguardar o próximo período de inscrição para trocar de plano.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p><strong>HMO Bronze $180/mês:</strong> barato, mas para ver um cardiologista, o paciente consulta o PCP primeiro para obter o referral. Se o PCP julgar desnecessário, a cobertura é negada. <strong>PPO Gold $350/mês:</strong> o paciente agenda diretamente com o cardiologista de sua escolha — inclusive em outro estado — e o plano cobre parcialmente mesmo fora da rede.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> O <strong>HMO</strong> é similar a planos com regulação rígida que exigem referência do clínico geral para especialistas — modelo presente em algumas redes de saúde populares no Brasil. O <strong>PPO</strong> é similar a planos premium que permitem acesso direto a qualquer especialista da rede com ressarcimento parcial fora dela. No Brasil, o acesso direto a especialistas sem referência é muito mais comum culturalmente do que nos EUA.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>15 & 16. Rede fechada vs rede ampla — o que significa? O que é referral?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p><strong>Rede fechada (in-network):</strong> o plano só cobre serviços de médicos, clínicas e hospitais que assinaram contrato com a seguradora. Usar prestadores fora dessa rede (out-of-network) resulta em cobertura zero ou custo muito maior. <strong>Rede ampla:</strong> planos que incluem muitos prestadores credenciados e/ou cobrem parcialmente serviços fora da rede.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>A distinção <strong>in-network vs out-of-network</strong> é fundamental no sistema americano. Os campos <code>copay_inn_tier1</code> e <code>copay_out_of_net</code> (e suas contrapartes de coinsurance) revelam o diferencial de custo. Planos HMO frequentemente têm <code>copay_out_of_net = NULL</code> ou valor proibitivo — simplesmente não cobrem out-of-network exceto emergências.</p>
+        <p><strong>Referral</strong> (encaminhamento): no modelo HMO/POS, o PCP é o "porteiro" do sistema. Para ver um especialista, o paciente precisa de autorização formal do PCP. Isso controla custos mas limita o acesso e gera fricção administrativa — especialmente problemático para pacientes oncológicos que precisam de acesso rápido a especialistas.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Na análise Q4, o <strong>porte de rede</strong> (<code>dim_network.network_size_tier</code>) é um proxy de amplitude baseado em número de planos por rede, não em número de prestadores credenciados (dado não disponível no dataset). A query <code>redes_pequenas_vs_media_estado</code> compara o prêmio médio de redes small/medium/large versus a média estadual, revelando se redes menores oferecem desconto real ou apenas concentram planos básicos.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>A análise Q4 revela um padrão importante: redes pequenas têm prêmios menores em média, mas com <strong>alta dispersão</strong> (stddev alto) — a vantagem de preço não é uniforme. É uma estratégia de nicho: redes pequenas concentram os planos mais baratos do mercado, mas também têm planos caros. O consumidor que pesquisa pode encontrar grandes economias, mas sem pesquisa pode pagar tanto quanto numa rede grande.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Rede pequena HMO Silver em Dallas: $210/mês, cobre 8 hospitais e 120 especialistas na área metropolitana. Rede grande PPO Silver em Dallas: $295/mês, cobre 32 hospitais e 1.500 especialistas no estado inteiro. Para adulto saudável: rede pequena economiza $1.020/ano. Para paciente com esclerose múltipla que precisa de neurologista específico no UT Southwestern: se esse hospital não está na rede pequena, o custo real é muito maior do que a economia de prêmio.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> A distinção in-network/out-of-network é similar ao conceito de <strong>rede referenciada vs livre escolha</strong> nos planos brasileiros. Planos com rede referenciada restrita só cobrem médicos e hospitais da lista da operadora. Planos de livre escolha permitem consultar qualquer médico com reembolso parcial. O modelo de referral HMO é raro no Brasil, onde o acesso direto a especialistas é culturalmente esperado.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 5: Benefícios e Cobertura ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 5</span> Benefícios, Cobertura e Essential Health Benefits</div>
+
+    <details class="faq-item">
+      <summary>17 & 18. O que é um benefício de plano? Quais aparecem no dataset?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>Um <strong>benefício</strong> é um serviço médico específico que o plano cobre — ou não. Cada plano ACA lista explicitamente suas regras de cobertura para cada tipo de serviço: se cobre, quanto cobra de copay ou coinsurance, e se há limite de sessões por ano.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Benefícios no Dataset (11 categorias analíticas)</div>
+        <table class="faq-table">
+          <tr><th>Categoria</th><th>Exemplos</th><th>Flag</th></tr>
+          <tr><td>Oncologia</td><td>Chemotherapy, Radiation Therapy, Infusion Therapy</td><td><code>is_oncology</code></td></tr>
+          <tr><td>Preventivo</td><td>Rastreamentos, vacinas, consultas de bem-estar</td><td><code>is_preventive</code></td></tr>
+          <tr><td>Saúde Mental</td><td>Psicoterapia, abuso de substâncias</td><td><code>is_mental_health</code></td></tr>
+          <tr><td>Cuidado Crônico</td><td>Home health, skilled nursing, reabilitação</td><td><code>is_chronic</code></td></tr>
+          <tr><td>Atenção Primária</td><td>Consultas de clínico geral, pediatria</td><td>—</td></tr>
+          <tr><td>Emergência</td><td>Pronto-socorro, ambulância</td><td>—</td></tr>
+          <tr><td>Maternidade</td><td>Pré-natal, parto, pós-parto</td><td>—</td></tr>
+          <tr><td>Farmácia</td><td>Medicamentos prescritos (Tier 1–4)</td><td>—</td></tr>
+          <tr><td>Especialista</td><td>Dermatologia, ortopedia, cardiologia</td><td>—</td></tr>
+          <tr><td>Dental/Visual</td><td>Odontologia pediátrica (obrigatória ACA)</td><td>—</td></tr>
+          <tr><td>Outros</td><td>Demais serviços fora das categorias acima</td><td>—</td></tr>
+        </table></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>A tabela fonte é <code>benefits_cost_sharing</code> (Silver) → <code>fct_benefit_coverage</code> (Gold) + <code>dim_benefit_category</code>. O campo <code>is_covered</code> indica se o benefício é coberto; <code>limit_qty</code> revela se há limite anual de sessões (crítico para infusão e radioterapia); <code>cost_type</code> classifica a estrutura de custo. A surrogate key <code>benefit_sk</code> é um hash MD5 do nome do benefício — determinístico e estável entre anos.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Na Q1, os três benefícios oncológicos (<code>is_oncology = TRUE</code>) são o objeto principal. Na Q3, <strong>benefícios como variável de precificação</strong>: o campo <code>pct_cobertura</code> (% de benefícios cobertos por plano) é o eixo X do scatter plot central — e a análise demonstra que ele tem correlação fraca com o prêmio dentro do mesmo metal level.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Um plano Silver no Alabama pode não cobrir Infusion Therapy (<code>is_covered = FALSE</code> para esse benefício) mesmo sendo EHB em outros estados. O ACA define as 10 categorias EHB, mas cada estado determina seu "benchmark" de referência — um benefício pode ser EHB no Massachusetts e não ser EHB no Alabama.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> Equivale ao <strong>Rol de Procedimentos da ANS</strong> — a lista de serviços que os planos são obrigados a cobrir. A diferença é que o rol brasileiro é único e nacional; nos EUA, os EHBs variam por estado, criando a heterogeneidade que torna o dataset tão rico analiticamente.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>19. O que são Essential Health Benefits (EHBs)?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>Os <strong>Essential Health Benefits (EHBs)</strong> são 10 categorias de serviços médicos que o ACA exige que todos os planos individuais e de pequenas empresas cubram obrigatoriamente — <em>sem annual dollar limits</em> (limites anuais de valor).</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">As 10 Categorias EHB</div>
+        <ul>
+          <li>Serviços ambulatoriais (consultas médicas)</li>
+          <li>Serviços de emergência</li>
+          <li>Hospitalização (cirurgias, internação)</li>
+          <li>Maternidade e cuidado neonatal</li>
+          <li>Saúde mental e tratamento de abuso de substâncias</li>
+          <li>Medicamentos prescritos</li>
+          <li>Serviços de reabilitação e habilitação</li>
+          <li>Serviços laboratoriais (exames)</li>
+          <li>Serviços preventivos e de bem-estar</li>
+          <li>Cuidados pediátricos (incluindo visão e odontologia infantil)</li>
+        </ul>
+        <p>Cada estado define seu próprio <strong>benchmark plan</strong> — plano de referência que especifica o que "cobrir" significa para cada categoria. Isso cria variação entre estados: Infusion Therapy é EHB em alguns estados e não em outros.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>Dois campos distintos com semânticas diferentes: <code>dim_benefit_category.is_ehb_standard</code> (BOOL_OR entre todos os estados — o benefício é EHB em pelo menos um estado) vs <code>fct_benefit_coverage.is_ehb</code> (o benefício é EHB neste plano/estado específico). O campo <code>dim_plan.ehb_pct_premium</code> mostra qual percentual do prêmio destina-se a cobrir EHBs — variável de precificação direta na análise Q3.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>EHBs não podem ter annual dollar limits — a seguradora não pode dizer "cobrimos até $50.000/ano em quimioterapia". Isso elevou o piso de proteção do mercado americano, mas também contribuiu para o aumento de prêmios pós-ACA. O <code>ehb_pct_premium</code> cresce de Bronze para Platinum — planos de maior tier destinam proporcionalmente mais do prêmio aos EHBs, não apenas cobrem mais serviços extras voluntariamente.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Antes do ACA, seguradoras podiam limitar a $500.000 vitalícios a cobertura de câncer. Uma paciente com leucemia que precisasse de 3 transplantes de medula poderia esgotar esse limite. Com o ACA e o mandato de EHBs sem annual dollar limits, isso não é mais possível — a seguradora cobre todos os transplantes necessários, sem teto de valor.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> A proibição de annual dollar limits para EHBs tem paralelo com a <strong>vedação à limitação de internações</strong> nos planos brasileiros — pela ANS, um plano não pode limitar o número de dias de internação por doença. O conceito de "cobertura sem teto financeiro" para serviços essenciais é similar em espírito, mas o sistema brasileiro aplica isso de forma mais direta através do rol de procedimentos.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 6: Geografia e Mercado ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 6</span> Geografia, Mercado e Competição</div>
+
+    <details class="faq-item">
+      <summary>20 & 21. O que é Service Area? O que significa atender múltiplos counties?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>A <strong>Service Area</strong> é a área geográfica dentro de um estado onde um plano específico está disponível para compra. Um plano pode ser "statewide" (disponível em todo o estado) ou cobrir apenas determinados condados — geralmente regiões metropolitanas onde a seguradora tem rede de prestadores estruturada.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>Uma seguradora pode operar múltiplas service areas dentro do mesmo estado — ex: área metropolitana de Houston, Dallas-Fort Worth e San Antonio como três service areas distintas no Texas. Cada area pode ter preços diferentes para o mesmo plano base, pois os custos médicos e a competição variam localmente. No dataset, a <strong>granularidade mais fina</strong> é o condado (<code>countyname</code> na tabela <code>rate</code>). A análise agrega ao nível estadual para reduzir volume, mas o campo <code>dim_plan.service_area_id</code> permite identificar a service area original.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>O campo <code>dim_geography.num_counties_covered</code> conta condados com cobertura no estado. Os campos <code>min_individual_rate</code> e <code>max_individual_rate</code> em <code>fct_plan_premium</code> revelam a variação de prêmio entre service areas dentro do mesmo estado para o mesmo plano. O campo <code>rate_count</code> indica quantos registros de condado foram agregados — planos statewide têm <code>rate_count</code> alto; planos locais têm baixo.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>A query <code>competicao_vs_premio_por_estado</code> inclui o campo <code>densidade_planos_por_condado</code> para contextualizar o efeito de competição geograficamente: alta densidade de planos no Texas pode estar concentrada em Austin/Houston/Dallas, enquanto o interior rural tem pouca oferta — o que é um dos elementos da análise Q5 (desertos de cobertura).</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Um plano Silver da Aetna em Ohio pode estar disponível apenas nos condados de Cuyahoga (Cleveland) e Franklin (Columbus). Um habitante de um condado rural no sudeste de Ohio pode não ter nenhum plano da Aetna disponível, mesmo que ela seja a maior seguradora do estado. Se o único issuer que cobre sua região aumentar o prêmio em 30%, ele não tem alternativa.</p></div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>22. O que são counties (condados) e qual seu equivalente no Brasil?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p><strong>Counties</strong> são a principal subdivisão administrativa dos estados americanos — abaixo do estado, acima das cidades. Os EUA têm aproximadamente <strong>3.143 counties</strong>, variando de condados densamente populosos (Los Angeles County, 10 milhões de pessoas) a condados rurais com menos de 1.000 habitantes.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Equivalência Brasileira</div>
+        <p>A analogia mais próxima no Brasil:</p>
+        <ul>
+          <li><strong>Município:</strong> correspondência direta em termos de unidade administrativa básica</li>
+          <li><strong>Microrregião IBGE:</strong> em termos de agrupamento de municípios com características econômicas similares, similar ao agrupamento funcional de counties americanos</li>
+        </ul>
+        <p>A diferença principal: no Brasil, o município é autônomo constitucionalmente; nos EUA, o county é uma subdivisão do estado com menos autonomia que um município brasileiro. Curiosamente, Texas tem 254 counties — o maior número de qualquer estado americano.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>O campo <code>countyname</code> na tabela <code>rate</code> (Silver) é a granularidade mais fina do dataset. O pipeline agrega ao nível estadual na Gold, mas o campo <code>dim_geography.num_counties_covered</code> preserva a contagem de condados com cobertura — proxy da capilaridade geográfica do mercado no estado.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Para a análise Q5 (desertos de cobertura), a granularidade de county seria ideal — estados com muitos counties sem nenhum plano disponível são "desertos". O dataset federal registra apenas counties com pelo menos um plano disponível; counties completamente sem oferta podem estar ausentes, subestimando o problema.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Brewster County no oeste do Texas: área maior que o estado de Connecticut, com apenas 9.000 habitantes. Em 2016, tinha apenas 1 seguradora disponível no marketplace federal. Um residente não tem opção de troca — ou contrata o que está disponível ou fica sem cobertura. Esse é o cenário de monopólio geográfico que a análise Q5 investiga.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> A analogia com "desertos de cobertura" no Brasil seria municípios do interior do Norte e Nordeste sem nenhuma operadora de plano de saúde atuando. No SUS, há pelo menos uma Unidade Básica de Saúde em todo município — no sistema americano, não há equivalente garantido para quem não consegue arcar com o prêmio do Marketplace.</div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>23 & 24. O que é um issuer/carrier? Como funciona a concorrência entre seguradoras?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>Um <strong>issuer</strong> (ou <em>carrier</em>) é a companhia de seguros de saúde que cria, vende e administra os planos. Cada issuer recebe um código de 5 dígitos do CMS (HIOS Issuer ID). A <strong>concorrência</strong> entre issuers no mesmo estado é o mecanismo fundamental de contenção de preços no Marketplace.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Principais Issuers do Período 2014–2016</div>
+        <ul>
+          <li><strong>Blue Cross Blue Shield (BCBS):</strong> família de seguradoras estaduais presente em quase todos os estados — BCBS da Florida e BCBS do Texas são entidades legais diferentes (IDs distintos)</li>
+          <li><strong>Aetna, Cigna, Humana, UnitedHealthcare:</strong> grandes conglomerados nacionais que operam via subsidiárias estaduais</li>
+          <li><strong>Molina, Centene:</strong> especializados em planos de baixo custo e populações Medicaid</li>
+          <li><strong>Co-ops ACA:</strong> seguradoras criadas especificamente pelo ACA — muitas faliram em 2015–2016, reduzindo a competição em vários estados</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>A tabela <code>fct_market_competition</code> agrega por estado/ano: <code>num_active_issuers</code> é o número de issuers com pelo menos um plano individual ativo com prêmio válido (>0 e <$3.000). A classificação <code>competition_tier</code> vai de <code>'monopoly'</code> (1 issuer) a <code>'high'</code> (7+ issuers) — variável independente central da análise Q2. O campo <code>delta_issuers</code> (<code>issuers_2016 − issuers_2014</code>) captura quais estados perderam ou ganharam competição no período.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>O dashboard Q2 demonstra que estados com mais issuers tendem a ter prêmios menores — a pressão competitiva funciona, mas com efeito não-linear: a transição de monopólio para 2–3 issuers tem impacto maior no preço do que de 7 para 10 issuers. O scatter Q2 revela que a <strong>saída de issuers</strong> (delta_issuers negativo) correlaciona com os maiores aumentos de prêmio no período.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Iowa em 2017 (após o dataset): apenas 1 issuer disponível em grande parte do estado. Com ausência de concorrência, o issuer sobrevivente não tem pressão para conter preços — prêmios subiram acima de 40% em um único ano em alguns counties. Esse é o cenário de "monopólio" que a análise Q5 investiga para o período 2014–2016, onde Alaska e Wyoming já apresentavam esse padrão.</p></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Analogia brasileira:</strong> Equivale às <strong>operadoras de planos de saúde</strong> (Unimed, Bradesco Saúde, SulAmérica, Hapvida, etc.). A ANS regulamenta a competição e autoriza entrada e saída de operadoras. A concentração regional também é fenômeno brasileiro — em alguns municípios do interior, a Unimed local tem posição dominante similar à de um issuer monopolista americano.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── SEÇÃO 7: Interpretação e Conexões ── -->
+  <div class="faq-section">
+    <div class="faq-section-title"><span class="section-num">SEÇÃO 7</span> Guia de Interpretação — Conectando Conceitos aos Gráficos</div>
+
+    <details class="faq-item">
+      <summary>25. Como interpretar a relação entre preço e cobertura?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>No mercado ACA, <strong>preço mais alto não significa necessariamente cobertura de mais benefícios</strong>. A principal variável que determina o preço é o <strong>metal level</strong> — que define a divisão de custos entre plano e paciente, não a lista de serviços cobertos. Dois planos com coberturas idênticas podem ter prêmios muito diferentes por fatores estruturais.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Explicação Detalhada</div>
+        <p>O scatter plot central da Q3 demonstra isso visualmente: pontos coloridos por metal level formam <strong>faixas horizontais</strong> (Bronze abaixo, Platinum acima) sem alinhamento com o eixo X (% de benefícios cobertos). Isso significa que:</p>
+        <ul>
+          <li>Um plano Bronze com 95% dos benefícios cobertos pode custar menos que um Platinum com 80% de cobertura</li>
+          <li>A cobertura de benefícios específicos (oncologia, maternidade) tem correlação positiva com prêmio apenas quando a análise não controla por metal level — é uma correlação espúria com o tier</li>
+          <li>O campo <code>ehb_pct_premium</code> revela que parte do diferencial de preço entre tiers é explicada pela obrigação legal (EHBs), não por cobertura "extra" voluntária</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>A análise quantifica isso com correlações de Pearson (<code>corr_cobertura_premio</code>) calculadas por célula <code>(metal_level, plan_type, ano)</code>. Uma correlação próxima de zero dentro de uma célula é evidência de que benefícios cobertos não explicam a variação de preço dentro daquele segmento. O alto <code>desvio_padrao_premio</code> dentro da mesma célula reforça: planos com cobertura similar têm preços muito diferentes — outros fatores (estado, rede, estratégia do issuer) dominam.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>Para o consumidor: ao comparar planos, não basta contar benefícios cobertos — é preciso verificar o metal level, o tipo de plano e o porte da rede. Para o analista: a covariável mais importante a controlar em qualquer análise de prêmio é o metal level, seguido de estado e tipo de plano. Benefícios adicionais têm peso menor e variável.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Um Bronze com cobertura de oncologia, maternidade, saúde mental e farmácia especializada (95% dos benefícios) custa $220/mês. Um Platinum com cobertura de consultas, emergência e exames básicos (70% dos benefícios) custa $380/mês. O Bronze tem mais serviços cobertos no papel, mas o Platinum é dramaticamente mais vantajoso financeiramente para qualquer paciente que precise usar o plano com frequência — porque o actuarial value (custo de uso real) é o driver de preço, não a lista de benefícios.</p></div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>26. Como interpretar a relação entre redes restritas e preço?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Definição Simples</div>
+        <p>Redes menores (menos prestadores credenciados) tendem a ter prêmios menores — mas a relação não é simples nem uniforme. O desconto em redes menores é real em média, mas altamente variável e dependente do estado, tipo de plano e metal level.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Três Padrões Revelados no Dashboard Q4</div>
+        <ul>
+          <li><strong>Redes pequenas têm prêmio médio menor</strong> — o desconto existe, mas alta dispersão (stddev elevado) indica estratégia de nicho: alguns planos muito baratos, outros caros. Não é um desconto uniforme garantido</li>
+          <li><strong>O tipo de plano importa mais do que o porte de rede</strong> — HMOs por design têm redes menores; comparar HMO Bronze de rede pequena com PPO Gold de rede grande seria enganoso. O controle por tipo_plano + metal_level revela o efeito real do porte de rede isolado</li>
+          <li><strong>Em estados monopolistas, o efeito desaparece</strong> — a vantagem de preço de redes pequenas existe onde há competição. Em estados com 1–2 issuers, até redes pequenas praticam prêmios próximos da média — sem concorrência, não há incentivo para ofertar preços menores</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Relação com o Dataset</div>
+        <p>O campo <code>network_size_tier</code> (small/medium/large) é baseado em <code>plan_count</code> por rede — número de planos que usam a rede, não número real de prestadores credenciados (dado não disponível). A query <code>redes_pequenas_vs_media_estado</code> calcula <code>variacao_pct</code> — desvio do prêmio da rede versus a média estadual. Um <code>variacao_pct</code> consistentemente negativo para <code>porte_rede = 'small'</code> confirma que redes menores são sistematicamente mais baratas no mercado local.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Impacto no Negócio & Análise</div>
+        <p>A ressalva estrutural obrigatória: <code>network_size_tier</code> é proxy de <em>diversidade de portfólio</em> do issuer, não de <em>amplitude clínica</em> da rede. Um HMO com 3 produtos pode ter 2.000 médicos credenciados; um PPO com 25 produtos pode ter rede mais estreita por produto. A limitação deve ser explicitada em qualquer apresentação da análise Q4.</p></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo Prático</div>
+        <p>Em Florida (2016, 8 issuers, alta competição): redes pequenas Silver custam em média 12% menos que a média estadual. Para consumidor na área metropolitana coberta pela rede pequena — economia real de ~$1.000/ano. Para quem mora em área rural não coberta pela rede pequena — a única opção é a rede grande, sem desconto. A análise Q4 cruzada com o mapa Q5 revela exatamente quais regiões têm essa assimetria.</p></div>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>27. Como os conceitos do mercado se conectam com os gráficos do dashboard?</summary>
+      <div class="faq-body">
+        <div class="faq-part"><div class="faq-part-label">Mapa de Conceitos por Aba do Dashboard</div>
+        <table class="faq-table">
+          <tr><th>Aba</th><th>Conceitos Chave</th><th>O que o Visual Responde</th></tr>
+          <tr>
+            <td><strong>Visão Geral</strong></td>
+            <td>ACA, Marketplace, SBE vs Federal Exchange</td>
+            <td>Escopo do dataset, KPIs gerais do mercado 2014–2016</td>
+          </tr>
+          <tr>
+            <td><strong>Q1 · Oncológicos</strong></td>
+            <td>Metal level, deductible, copay, coinsurance, MOOP, EHBs oncológicos, is_subj_to_ded</td>
+            <td>Como evoluiu o custo real de tratamento oncológico? Platinum é vantajoso para crônicos?</td>
+          </tr>
+          <tr>
+            <td><strong>Q2 · Competição</strong></td>
+            <td>Issuer/carrier, competition_tier, prêmio, delta_issuers</td>
+            <td>Mais issuers = prêmios mais baixos? A saída de competidores eleva preços?</td>
+          </tr>
+          <tr>
+            <td><strong>Q3 · Benefícios</strong></td>
+            <td>Benefícios, EHBs, correlação cobertura-preço, metal level como controle</td>
+            <td>Benefícios cobertos determinam o preço? Quais categorias têm maior peso financeiro?</td>
+          </tr>
+          <tr>
+            <td><strong>Q4 · Rede & Preço</strong></td>
+            <td>HMO/PPO, network_size_tier, in-network vs out-of-network</td>
+            <td>Redes menores oferecem preços menores? O desconto é uniforme por estado?</td>
+          </tr>
+          <tr>
+            <td><strong>Q5 · Monopólios</strong></td>
+            <td>Issuer único (monopoly), county coverage, service area, desertos de cobertura</td>
+            <td>Monopólios inflam preços? Quais regiões têm déficit crítico de oferta?</td>
+          </tr>
+        </table></div>
+
+        <div class="faq-part"><div class="faq-part-label">Conexões Transversais Entre Análises</div>
+        <p>Os insights mais ricos surgem ao cruzar análises de abas diferentes:</p>
+        <ul>
+          <li><strong>Q2 × Q4:</strong> Em estados monopolistas, redes pequenas perdem a vantagem de preço — sem competição, até seguradoras com redes restritas não precisam oferecer desconto</li>
+          <li><strong>Q1 × Q3:</strong> Planos com maior cobertura oncológica tendem a ter MOOP menor — o custo da cobertura abrangente pode ser compensado pelo limite da exposição máxima do paciente</li>
+          <li><strong>Q1 × Q4:</strong> HMOs de redes pequenas (mais baratos em prêmio) frequentemente têm limite de sessões de infusão mais restritivo — o trade-off custo vs. acesso é diretamente quantificável</li>
+          <li><strong>Q3 × Q2:</strong> Em estados com alta competição, a correlação benefícios-preço pode ser menor — issuers competem em preço, não apenas em cobertura</li>
+        </ul></div>
+
+        <div class="faq-part"><div class="faq-part-label">Limitações do Dataset Aplicáveis a Todas as Análises</div>
+        <div class="faq-highlight">
+          <strong>Ressalvas estruturais importantes ao interpretar qualquer gráfico deste dashboard:</strong>
+          <ul>
+            <li><strong>Cobertura geográfica parcial:</strong> 19 estados com SBE própria têm dados ausentes ou limitados — a análise reflete o mercado federal, não o mercado americano completo</li>
+            <li><strong>Ausência de dados de sinistros:</strong> o dataset contém preços e coberturas contratuais, mas não dados reais de uso (quantas sessões foram realizadas, qual o custo real dos tratamentos)</li>
+            <li><strong>Rede como proxy:</strong> <code>network_size_tier</code> é baseado em número de planos, não em prestadores credenciados — a amplitude clínica real da rede não está disponível</li>
+            <li><strong>Corte temporal de calibração:</strong> 2014–2016 são os anos iniciais do ACA — o mercado estava se ajustando; tendências desse período podem não refletir a dinâmica de mercados maduros</li>
+            <li><strong>Foco no mercado individual:</strong> planos corporativos (maioria dos segurados americanos) e públicos (Medicare/Medicaid) não estão no dataset</li>
+          </ul>
+        </div></div>
+
+        <div class="faq-part"><div class="faq-part-label">Exemplo de Interpretação Integrada</div>
+        <p>Um analista estudando qual plano recomendar para um paciente oncológico de 45 anos no Texas usaria o dashboard assim:</p>
+        <ol>
+          <li><strong>Q1:</strong> Verificar que Platinum minimiza custo total (prêmio + tratamento estimado) para perfil oncológico — a diferença em relação ao Bronze pode superar $3.000/ano</li>
+          <li><strong>Q2:</strong> Confirmar que Texas tem competição razoável (7+ issuers em 2016) — há opções suficientes para comparar dentro do tier Platinum</li>
+          <li><strong>Q4:</strong> Dentro dos Platinum, preferir PPO de rede média/grande — para manter acesso a oncologistas especializados (MD Anderson está em Houston)</li>
+          <li><strong>Q3:</strong> Dentro dos PPO Platinum, a cobertura de benefícios varia pouco entre planos — focar no prêmio, no MOOP e na rede, não no número de benefícios listados</li>
+        </ol></div>
+
+        <div class="faq-analogy"><span class="analogy-icon">🇧🇷</span><strong>Para o profissional brasileiro de dados:</strong> Este dashboard demonstra como um pipeline bem modelado (camada Gold em star schema) habilita análises de negócio complexas com queries SQL relativamente simples. Os conceitos de <em>metal_level</em>, <em>competition_tier</em> e <em>network_size_tier</em> são <strong>variáveis derivadas</strong> criadas no pipeline ETL que transformam dados brutos em categorias analiticamente úteis — um padrão diretamente aplicável em projetos de dados de saúde suplementar brasileiros, onde a granularidade do dataset ANS é comparable em riqueza.</div>
+      </div>
+    </details>
+  </div>
+
+</div><!-- /tab-faq -->
 
 <script>
 // ============================================================
