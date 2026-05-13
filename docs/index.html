@@ -433,18 +433,12 @@
     <div class="insight"><strong>Argumento visual central:</strong> Todos os tiers têm <strong>cobertura similar (77–85%)</strong> mas prêmios radicalmente diferentes. Bronze com 80% de cobertura custa $150–$290; Platinum com 78% custa $465–$583. O eixo X (cobertura) explica quase nada do eixo Y (preço). <strong>O nível metálico (tier regulatório) é o verdadeiro driver de preço.</strong></div>
   </div>
 
-  <div class="chart-grid chart-grid-2">
+  <div class="chart-grid chart-grid-1">
     <div class="chart-card">
       <h3>Prêmio Médio por Faixa de Cobertura e Metal Level (2016)</h3>
       <div class="chart-subtitle">Planos agrupados em 3 faixas de % de benefícios cobertos. Dentro de cada metal level, planos com mais benefícios cobertos não são sistematicamente mais caros.</div>
       <div id="chart-q3-bands"></div>
       <div class="insight"><strong>Dentro do mesmo tier:</strong> Silver com 85–94% de cobertura ($296/mês) é <strong>mais barato</strong> que Silver com 70–84% ($304/mês). Ou seja, cobrir mais benefícios não implica pagar mais — o EHB mandatório nivela o mercado por dentro de cada tier.</div>
-    </div>
-    <div class="chart-card">
-      <h3>Dispersão de Prêmio Dentro de Cada Metal Level (2016)</h3>
-      <div class="chart-subtitle">Boxplot do prêmio mensal por metal level (2016). A amplitude de cada caixa representa a variação de preços entre planos do mesmo tier — que têm cobertura de benefícios praticamente idêntica.</div>
-      <div id="chart-q3-box"></div>
-      <div class="insight"><strong>Silver tem a maior dispersão:</strong> Planos Silver custam de $180 a $596/mês. Planos de cobertura similar no mesmo tier variam $400+. Isso prova que fatores além de benefícios — estado, rede, tipo de plano — dominam a precificação.</div>
     </div>
   </div>
 </div>
@@ -1453,13 +1447,6 @@ const Q3_BANDS = {
   n_band3: [2, 4, 9, 5, 0]
 };
 
-const Q3_BOX = {
-  Catastrophic: { min: 161.71, q1: 189.58, median: 230.87, q3: 268.79, max: 412.0 },
-  Bronze:       { min: 151.63, q1: 195.09, median: 264.52, q3: 284.55, max: 490.0 },
-  Silver:       { min: 180.33, q1: 254.88, median: 301.66, q3: 338.66, max: 596.0 },
-  Gold:         { min: 212.04, q1: 299.60, median: 374.0,  q3: 403.40, max: 697.0 },
-  Platinum:     { min: 465.67, q1: 491.66, median: 496.19, q3: 524.93, max: 583.07 }
-};
 
 // ── Q4 DATA ──
 const Q4_BRONZE_2016 = [
@@ -1838,26 +1825,6 @@ function initQ3() {
     legend: { orientation: 'h', y: -0.3, font: { size: 11 } }
   }), PLOTLY_CONFIG);
 
-  // Chart 3: Box plot approximation with bar + error bars
-  const mets = Object.keys(Q3_BOX);
-  const boxData = mets.map(m => ({
-    type: 'box',
-    name: m,
-    q1: [Q3_BOX[m].q1],
-    median: [Q3_BOX[m].median],
-    q3: [Q3_BOX[m].q3],
-    lowerfence: [Q3_BOX[m].min],
-    upperfence: [Q3_BOX[m].max],
-    marker: { color: COLORS[m] },
-    fillcolor: COLORS[m] + '40',
-    line: { color: COLORS[m] }
-  }));
-  Plotly.newPlot('chart-q3-box', boxData, layout({
-    height: 300,
-    yaxis: { title: 'Prêmio Mensal (USD)', tickprefix: '$' },
-    xaxis: { title: '' },
-    showlegend: false
-  }), PLOTLY_CONFIG);
 }
 
 function initQ4() {
