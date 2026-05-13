@@ -290,19 +290,19 @@
   <div class="section-header">
     <div class="label">Questão 1</div>
     <h2>Estrutura de Custos em Tratamentos Oncológicos</h2>
-    <p>Como evoluiu a relação entre Copay e Coinsurance para Quimioterapia e Terapia de Infusão de 2014 a 2016? Qual nível metálico minimiza a exposição financeira total do paciente oncológico crônico?</p>
+    <p>Como evoluiu a relação entre custos para Quimioterapia e Terapia de Infusão de 2014 a 2016? Qual nível metálico minimiza a exposição financeira total do paciente oncológico crônico?</p>
   </div>
 
   <div class="kpi-row">
     <div class="kpi-card">
       <div class="kpi-label">Deductible Bronze (2015, Quimio)</div>
-      <div class="kpi-value bronze">$5.208</div>
+      <div class="kpi-value bronze">$4.450</div>
       <div class="kpi-sub">franquia média antes da cobertura</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Deductible Platinum (2015, Quimio)</div>
-      <div class="kpi-value platinum">$526</div>
-      <div class="kpi-sub">10× menor que Bronze</div>
+      <div class="kpi-value platinum">$373</div>
+      <div class="kpi-sub">~12× menor que Bronze</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">% planos Bronze c/ deductible</div>
@@ -321,7 +321,7 @@
       <h3>Deductible Efetivo por Nível Metálico (Quimioterapia, 2015)</h3>
       <div class="chart-subtitle">Franquia média que o paciente deve esgotar antes que o plano pague qualquer centavo do tratamento. Calculado apenas sobre planos que cobrem quimioterapia e exigem deductible prévio.</div>
       <div id="chart-q1-deductible"></div>
-      <div class="insight"><strong>O custo oculto Bronze:</strong> Um paciente com Bronze iniciando quimioterapia paga em média <strong>$5.208 do próprio bolso</strong> antes de qualquer reembolso — a sessão custa $10K–$15K nos EUA. O deductible Platinum de $526 é pago na 1ª sessão e a cobertura entra imediatamente.</div>
+      <div class="insight"><strong>O custo oculto Bronze:</strong> Um paciente com Bronze iniciando quimioterapia paga em média <strong>$4.450 do próprio bolso</strong> antes de qualquer reembolso — a sessão custa $10K–$15K nos EUA. O deductible Platinum de $373 é pago na 1ª sessão e a cobertura entra imediatamente.</div>
     </div>
     <div class="chart-card">
       <h3>% de Planos que Exigem Deductible Antes da Cobertura Oncológica (2015)</h3>
@@ -1314,7 +1314,7 @@ const OV_TRADEOFF = {
 // ── Q1 DATA ──
 const Q1_DEDUCTIBLE = {
   metals:     ['Bronze', 'Silver', 'Gold', 'Platinum'],
-  deductible: [5208,      3466,     1496,    526]
+  deductible: [4450,      2213,     1165,    373]
 };
 
 const Q1_PCT_DED = {
@@ -1613,7 +1613,7 @@ function initQ1() {
     xaxis: { title: 'Nível Metálico' },
     showlegend: false,
     annotations: [{
-      x: 'Bronze', y: 5208, text: '10× maior<br>que Platinum',
+      x: 'Bronze', y: 4450, text: '~12× maior<br>que Platinum',
       showarrow: true, arrowhead: 2, ax: 60, ay: -30,
       font: { color: '#f87171', size: 11 }
     }]
